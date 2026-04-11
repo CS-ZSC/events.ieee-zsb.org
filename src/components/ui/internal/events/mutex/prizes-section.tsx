@@ -20,14 +20,18 @@ export default function PrizesSection({
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    if (!competitionId) return;
     getCompetitionPrizes(competitionId)
       .then(setPrizes)
-      .catch(() => setError(true))
+      .catch((err) => {
+        console.error("Failed to load prizes UI:", err);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, [competitionId]);
 
   const maxAmount = prizes.length > 0
-    ? Math.max(...prizes.map((p) => parseInt(p.amount.replace(/[^\d]/g, "")) || 0))
+    ? Math.max(...prizes.map((p) => parseFloat(p.amount.replace(/[^\d.]/g, "")) || 0))
     : 1;
 
   return (
@@ -44,7 +48,7 @@ export default function PrizesSection({
       ) : (
         <Flex flexWrap="wrap" justify="center" align="end" gap={8} mt={10}>
           {prizes.map((prize) => {
-            const amount = parseInt(prize.amount.replace(/[^\d]/g, "")) || 0;
+            const amount = parseFloat(prize.amount.replace(/[^\d.]/g, "")) || 0;
             const height = maxAmount > 0 ? (amount / maxAmount) * 400 : 100;
 
             let bgColor;

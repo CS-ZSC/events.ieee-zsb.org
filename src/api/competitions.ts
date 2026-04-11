@@ -25,22 +25,37 @@ interface ApiResponse<T> {
 }
 
 export async function getCompetitions() {
-  const { data } = await api.get<ApiResponse<ApiCompetition[]>>(
-    "/eventsgate/competitions"
-  );
-  return data.data;
+  try {
+    const { data } = await api.get<ApiResponse<ApiCompetition[]>>(
+      "/eventsgate/competitions"
+    );
+    return data.data;
+  } catch (error) {
+    console.error("Error fetching competitions:", error);
+    throw error;
+  }
 }
 
 export async function getCompetitionById(id: number) {
-  const { data } = await api.get<ApiResponse<ApiCompetition>>(
-    `/eventsgate/competitions/${id}`
-  );
-  return data.data;
+  try {
+    const { data } = await api.get<ApiResponse<ApiCompetition>>(
+      `/eventsgate/competitions/${id}`
+    );
+    return data.data;
+  } catch (error) {
+    console.error(`Error fetching competition with id ${id}:`, error);
+    throw error;
+  }
 }
 
 export async function getCompetitionPrizes(competitionId: number) {
-  const { data } = await api.get<ApiResponse<ApiPrize[]>>(
-    `/eventsgate/competitions/${competitionId}/prizes`
-  );
-  return data.data;
+  try {
+    const { data } = await api.get<ApiResponse<ApiPrize[]>>(
+      `/eventsgate/competitions/${competitionId}/prizes`
+    );
+    return data.data;
+  } catch (error) {
+    console.error(`Error fetching prizes for competition ${competitionId}:`, error);
+    throw error;
+  }
 }

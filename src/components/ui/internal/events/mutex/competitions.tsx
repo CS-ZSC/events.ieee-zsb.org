@@ -18,7 +18,10 @@ export default function Competitions({ event }: { event: Event }) {
   useEffect(() => {
     getCompetitions()
       .then(setCompetitions)
-      .catch(() => setError(true))
+      .catch((err) => {
+        console.error("Failed to load competitions UI:", err);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -54,7 +57,7 @@ export default function Competitions({ event }: { event: Event }) {
                 shortName: competition.short_name,
                 image: competition.image,
                 description: competition.description,
-                link: `/events/mutex/${competition.short_name}`,
+                link: `/events/${event.slug}/${competition.short_name}`,
                 overview: competition.overview,
                 trophiesDescription: competition.trophies_description,
                 rulesDescription: competition.rules_description,

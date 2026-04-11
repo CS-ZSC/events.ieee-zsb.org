@@ -6,9 +6,9 @@ import HeroSection from "@/components/ui/internal/events/mutex/hero-section";
 import SectionTitle from "@/components/ui/internal/section-title";
 import SectionDescription from "@/components/ui/internal/section-description";
 import SectionContainer from "@/components/ui/internal/events/mutex/section-container";
-import DownloadButton from "@/components/ui/internal/download-button";
 import NavButton from "@/components/ui/internal/nav-button";
 import AlternativeText from "@/components/ui/internal/alternative-text";
+import PrizesSection from "@/components/ui/internal/events/mutex/prizes-section";
 
 export async function generateMetadata({
   params,
@@ -163,6 +163,11 @@ export default async function CompetitionPage({
             </Flex>
           </SectionContainer>
         )}
+
+        <PrizesSection
+          competitionId={competition.id}
+          description={competition.trophiesDescription}
+        />
 
         {competition.rulebook && (
           <SectionContainer>

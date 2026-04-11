@@ -12,6 +12,7 @@
     "@chakra-ui/react": "^3.22.0",
     "@emotion/react": "^11.14.0",
     "@iconify/react": "^6.0.0",
+    "axios": "^1.15.0",
     "framer-motion": "^12.23.11",
     "jotai": "^2.12.5",
     "next": "15.4.4",

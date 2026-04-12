@@ -30,7 +30,13 @@ type RegisterFormData = {
 
 export default function Register() {
   const setUserData = useSetAtom(userDataAtom);
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
     defaultValues: {
       fullName: "",
       email: "",
@@ -41,9 +47,8 @@ export default function Register() {
       idFrontImage: null,
       idBackImage: null,
       profileImage: null,
-    }
+    },
   });
-
 
   const onSubmit = async (data: RegisterFormData) => {
     if (!data.idFrontImage || !data.idBackImage || !data.profileImage) {
@@ -51,7 +56,7 @@ export default function Register() {
         closable: true,
         title: "Missed Fields",
         description: "Please upload all required images.",
-        duration: 3000
+        duration: 3000,
       });
       return;
     }
@@ -61,7 +66,7 @@ export default function Register() {
         closable: true,
         title: "Passwords do not match!",
         description: "Please make sure both passwords match.",
-        duration: 3000
+        duration: 3000,
       });
       return;
     }
@@ -74,7 +79,7 @@ export default function Register() {
       Password: data.password,
       IDFrontImage: data.idFrontImage,
       IDBackImage: data.idBackImage,
-      ProfileImage: data.profileImage
+      ProfileImage: data.profileImage,
     };
 
     const res = await registerUser(requestData);
@@ -86,7 +91,7 @@ export default function Register() {
         inviteUserToken: res.inviteUserToken,
         name: res.name,
         profileImageURL: res.profileImageURL,
-        token: res.token
+        token: res.token,
       };
       setUserData(userData);
 
@@ -94,16 +99,16 @@ export default function Register() {
         closable: true,
         title: "Registration Successful",
         description: "Your account has been created successfully.",
-        duration: 10000
+        duration: 10000,
       });
-      
-      redirect("/");
+
+      redirect(`/auth/verify?email=${encodeURIComponent(data.email)}`);
     } else {
       toaster.error({
         closable: true,
         title: "Registration Failed",
         description: res.message,
-        duration: 10000
+        duration: 10000,
       });
       return;
     }
@@ -118,7 +123,6 @@ export default function Register() {
               <Text color="neutral-1" fontSize="2rem">
                 Register
               </Text>
-
 
               <Stack w="full" alignItems="center">
                 <Box textAlign="center" mb={4}>
@@ -136,7 +140,10 @@ export default function Register() {
                   placeholder="John Doe"
                   {...register("fullName", {
                     required: "Full name is required",
-                    minLength: { value: 3, message: "Name must be at least 3 characters" }
+                    minLength: {
+                      value: 3,
+                      message: "Name must be at least 3 characters",
+                    },
                   })}
                   isInvalid={!!errors.fullName}
                   errorMessage={errors.fullName?.message}
@@ -150,8 +157,8 @@ export default function Register() {
                     required: "Email is required",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address"
-                    }
+                      message: "Invalid email address",
+                    },
                   })}
                   isInvalid={!!errors.email}
                   errorMessage={errors.email?.message}
@@ -167,8 +174,14 @@ export default function Register() {
                       value: /^[0-9]+$/,
                       message: "Invalid phone number",
                     },
-                    maxLength: { value: 11, message: "Phone number cannot be more 11 digits" },
-                    minLength: { value: 11, message: "Phone number cannot be less 11 digits" }
+                    maxLength: {
+                      value: 11,
+                      message: "Phone number cannot be more 11 digits",
+                    },
+                    minLength: {
+                      value: 11,
+                      message: "Phone number cannot be less 11 digits",
+                    },
                   })}
                   isInvalid={!!errors.phone}
                   errorMessage={errors.phone?.message}
@@ -181,10 +194,16 @@ export default function Register() {
                     required: "National ID is required",
                     pattern: {
                       value: /^[0-9]+$/,
-                      message: "Invalid National ID"
+                      message: "Invalid National ID",
                     },
-                    maxLength: { value: 14, message: "National ID cannot be more than 14 digits" },
-                    minLength: { value: 14, message: "National ID cannot be less than 14 digits" }
+                    maxLength: {
+                      value: 14,
+                      message: "National ID cannot be more than 14 digits",
+                    },
+                    minLength: {
+                      value: 14,
+                      message: "National ID cannot be less than 14 digits",
+                    },
                   })}
                   isInvalid={!!errors.nationalId}
                   errorMessage={errors.nationalId?.message}
@@ -212,11 +231,15 @@ export default function Register() {
                   placeholder="Enter your password"
                   {...register("password", {
                     required: "Password is required",
-                    minLength: { value: 8, message: "Password must be at least 8 characters" },
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
                     pattern: {
                       value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])/,
-                      message: "Password must contain at least one uppercase letter, one lowercase letter, and one special character"
-                    }
+                      message:
+                        "Password must contain at least one uppercase letter, one lowercase letter, and one special character",
+                    },
                   })}
                   isInvalid={!!errors.password}
                   errorMessage={errors.password?.message}
@@ -228,24 +251,30 @@ export default function Register() {
                   {...register("confirmPassword", {
                     required: "Please confirm your password",
                     validate: (val: string) => {
-                      if (watch('password') != val) {
+                      if (watch("password") != val) {
                         return "Passwords do not match";
                       }
-                    }
+                    },
                   })}
                   isInvalid={!!errors.confirmPassword}
                   errorMessage={errors.confirmPassword?.message}
                 />
               </Stack>
 
-              <AuthButton text="Create an account" loading={isSubmitting} loadingText="Registering..." />
+              <AuthButton
+                text="Create an account"
+                loading={isSubmitting}
+                loadingText="Registering..."
+              />
               <Stack>
-              <Text color="neutral-3" fontSize="0.8rem" textAlign="center">
-                Your data is securely encrypted and protected. We take your privacy seriously.
-              </Text>
-              <Text color="neutral-3" fontSize="0.8rem" mt="-2">
-                Why National ID? National ID is required by the university for verification purposes.
-              </Text>
+                <Text color="neutral-3" fontSize="0.8rem" textAlign="center">
+                  Your data is securely encrypted and protected. We take your
+                  privacy seriously.
+                </Text>
+                <Text color="neutral-3" fontSize="0.8rem" mt="-2">
+                  Why National ID? National ID is required by the university for
+                  verification purposes.
+                </Text>
               </Stack>
 
               <Flex

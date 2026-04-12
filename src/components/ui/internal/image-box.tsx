@@ -1,4 +1,4 @@
-import { Image } from "@chakra-ui/react";
+import { Image, Box, Center, Text } from "@chakra-ui/react";
 import React from "react";
 
 interface ImageBoxProps {
@@ -18,6 +18,32 @@ export default function ImageBox({
   mx = "auto",
   roundedBottom = "2xl",
 }: ImageBoxProps) {
+  // Check if the path is empty. If it is, we don't render the Image tag at all
+  // to prevent the Next.js empty string error. Instead, we render a placeholder Box.
+  if (!path || path.trim() === "") {
+    return (
+      <Center
+        width="full"
+        maxWidth={maxWidth}
+        mx={mx}
+        position="relative"
+        border="1px solid"
+        borderColor="primary-3"
+        rounded="2xl"
+        roundedBottom={roundedBottom}
+        bg="gray.100"
+        style={{
+          aspectRatio: aspectRatio,
+        }}
+      >
+        <Text color="gray.400" fontWeight="bold">
+          Image Coming Soon
+        </Text>
+      </Center>
+    );
+  }
+
+  // If the path is valid, render the actual image
   return (
     <Image
       src={path}

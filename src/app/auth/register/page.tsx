@@ -12,8 +12,6 @@ import { toaster } from "@/components/ui/toaster";
 import PasswordInput from "@/components/ui/internal/password-input";
 import { RegisterData, registerUser } from "@/api/auth";
 import AvatarUpload from "@/components/ui/internal/auth/avatar-upload";
-import { useSetAtom } from "jotai";
-import { userDataAtom, UserData } from "@/atoms/auth";
 import { redirect } from "next/navigation";
 
 type RegisterFormData = {
@@ -29,8 +27,13 @@ type RegisterFormData = {
 };
 
 export default function Register() {
-  const setUserData = useSetAtom(userDataAtom);
-  const { register, handleSubmit, watch, setValue, formState: { errors, isSubmitting } } = useForm<RegisterFormData>({
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormData>({
     defaultValues: {
       fullName: "",
       email: "",
@@ -41,71 +44,36 @@ export default function Register() {
       idFrontImage: null,
       idBackImage: null,
       profileImage: null,
-    }
+    },
   });
 
-
   const onSubmit = async (data: RegisterFormData) => {
-    if (!data.idFrontImage || !data.idBackImage || !data.profileImage) {
-      toaster.error({
-        closable: true,
-        title: "Missed Fields",
-        description: "Please upload all required images.",
-        duration: 3000
-      });
-      return;
-    }
-
-    if (data.password !== data.confirmPassword) {
-      toaster.error({
-        closable: true,
-        title: "Passwords do not match!",
-        description: "Please make sure both passwords match.",
-        duration: 3000
-      });
-      return;
-    }
-
     const requestData: RegisterData = {
-      Name: data.fullName,
-      Email: data.email,
-      PhoneNumber: data.phone,
-      NationalId: data.nationalId,
-      Password: data.password,
-      IDFrontImage: data.idFrontImage,
-      IDBackImage: data.idBackImage,
-      ProfileImage: data.profileImage
+      name: data.fullName,
+      email: data.email,
+      phone_number: data.phone,
+      national_id: data.nationalId,
+      password: data.password,
+      password_confirmation: data.confirmPassword,
     };
 
     const res = await registerUser(requestData);
 
     if (res.success) {
-      const userData: UserData = {
-        email: res.email,
-        id: res.id,
-        inviteUserToken: res.inviteUserToken,
-        name: res.name,
-        profileImageURL: res.profileImageURL,
-        token: res.token
-      };
-      setUserData(userData);
-
       toaster.success({
         closable: true,
         title: "Registration Successful",
-        description: "Your account has been created successfully.",
-        duration: 10000
+        description: "Check your email for the verification code.",
+        duration: 10000,
       });
-      
-      redirect("/");
+      redirect(`/auth/verify?email=${encodeURIComponent(data.email)}`);
     } else {
       toaster.error({
         closable: true,
         title: "Registration Failed",
         description: res.message,
-        duration: 10000
+        duration: 10000,
       });
-      return;
     }
   };
 
@@ -119,7 +87,6 @@ export default function Register() {
                 Register
               </Text>
 
-
               <Stack w="full" alignItems="center">
                 <Box textAlign="center" mb={4}>
                   <AvatarUpload
@@ -131,12 +98,16 @@ export default function Register() {
                     errorMessage={errors.profileImage?.message}
                   />
                 </Box>
+
                 <Input
                   label="Full Name"
                   placeholder="John Doe"
                   {...register("fullName", {
                     required: "Full name is required",
-                    minLength: { value: 3, message: "Name must be at least 3 characters" }
+                    minLength: {
+                      value: 3,
+                      message: "Name must be at least 3 characters",
+                    },
                   })}
                   isInvalid={!!errors.fullName}
                   errorMessage={errors.fullName?.message}
@@ -150,8 +121,8 @@ export default function Register() {
                     required: "Email is required",
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: "Invalid email address"
-                    }
+                      message: "Invalid email address",
+                    },
                   })}
                   isInvalid={!!errors.email}
                   errorMessage={errors.email?.message}
@@ -167,8 +138,14 @@ export default function Register() {
                       value: /^[0-9]+$/,
                       message: "Invalid phone number",
                     },
-                    maxLength: { value: 11, message: "Phone number cannot be more 11 digits" },
-                    minLength: { value: 11, message: "Phone number cannot be less 11 digits" }
+                    maxLength: {
+                      value: 11,
+                      message: "Phone number cannot be more than 11 digits",
+                    },
+                    minLength: {
+                      value: 11,
+                      message: "Phone number cannot be less than 11 digits",
+                    },
                   })}
                   isInvalid={!!errors.phone}
                   errorMessage={errors.phone?.message}
@@ -176,15 +153,22 @@ export default function Register() {
 
                 <Input
                   label="National ID"
-                  placeholder="Enter your national ID number"
+                  placeholder="Enter your 14-digit national ID"
                   {...register("nationalId", {
                     required: "National ID is required",
                     pattern: {
-                      value: /^[0-9]+$/,
-                      message: "Invalid National ID"
+                      value:
+                        /^[23]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(0[1-9]|[12]\d|3[01])\d{5}$/,
+                      message: "Please enter a valid Egyptian National ID",
                     },
-                    maxLength: { value: 14, message: "National ID cannot be more than 14 digits" },
-                    minLength: { value: 14, message: "National ID cannot be less than 14 digits" }
+                    maxLength: {
+                      value: 14,
+                      message: "National ID must be 14 digits",
+                    },
+                    minLength: {
+                      value: 14,
+                      message: "National ID must be 14 digits",
+                    },
                   })}
                   isInvalid={!!errors.nationalId}
                   errorMessage={errors.nationalId?.message}
@@ -212,11 +196,15 @@ export default function Register() {
                   placeholder="Enter your password"
                   {...register("password", {
                     required: "Password is required",
-                    minLength: { value: 8, message: "Password must be at least 8 characters" },
+                    minLength: {
+                      value: 8,
+                      message: "Password must be at least 8 characters",
+                    },
                     pattern: {
                       value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])/,
-                      message: "Password must contain at least one uppercase letter, one lowercase letter, and one special character"
-                    }
+                      message:
+                        "Password must contain uppercase, lowercase, and special character",
+                    },
                   })}
                   isInvalid={!!errors.password}
                   errorMessage={errors.password?.message}
@@ -227,25 +215,29 @@ export default function Register() {
                   placeholder="Confirm your password"
                   {...register("confirmPassword", {
                     required: "Please confirm your password",
-                    validate: (val: string) => {
-                      if (watch('password') != val) {
-                        return "Passwords do not match";
-                      }
-                    }
+                    validate: (val: string) =>
+                      watch("password") === val || "Passwords do not match",
                   })}
                   isInvalid={!!errors.confirmPassword}
                   errorMessage={errors.confirmPassword?.message}
                 />
               </Stack>
 
-              <AuthButton text="Create an account" loading={isSubmitting} loadingText="Registering..." />
+              <AuthButton
+                text="Create an account"
+                loading={isSubmitting}
+                loadingText="Registering..."
+              />
+
               <Stack>
-              <Text color="neutral-3" fontSize="0.8rem" textAlign="center">
-                Your data is securely encrypted and protected. We take your privacy seriously.
-              </Text>
-              <Text color="neutral-3" fontSize="0.8rem" mt="-2">
-                Why National ID? National ID is required by the university for verification purposes.
-              </Text>
+                <Text color="neutral-3" fontSize="0.8rem" textAlign="center">
+                  Your data is securely encrypted and protected. We take your
+                  privacy seriously.
+                </Text>
+                <Text color="neutral-3" fontSize="0.8rem" mt="-2">
+                  Why National ID? National ID is required by the university for
+                  verification purposes.
+                </Text>
               </Stack>
 
               <Flex

@@ -65,7 +65,7 @@ export default function HeroSection({
           {onRegisterClick ? (
             <Button
               onClick={onRegisterClick}
-              isLoading={isLoading}
+              loading={isLoading}
               bg={isRegistered ? "red.600" : "primary-1"}
               color="white"
               _hover={{ bg: isRegistered ? "red.700" : "primary-2" }}

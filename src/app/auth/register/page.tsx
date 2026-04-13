@@ -153,20 +153,21 @@ export default function Register() {
 
                 <Input
                   label="National ID"
-                  placeholder="Enter your national ID number"
+                  placeholder="Enter your 14-digit national ID"
                   {...register("nationalId", {
                     required: "National ID is required",
                     pattern: {
-                      value: /^[0-9]+$/,
-                      message: "Invalid National ID",
+                      value:
+                        /^[23]\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])(0[1-9]|[12]\d|3[01])\d{5}$/,
+                      message: "Please enter a valid Egyptian National ID",
                     },
                     maxLength: {
                       value: 14,
-                      message: "National ID cannot be more than 14 digits",
+                      message: "National ID must be 14 digits",
                     },
                     minLength: {
                       value: 14,
-                      message: "National ID cannot be less than 14 digits",
+                      message: "National ID must be 14 digits",
                     },
                   })}
                   isInvalid={!!errors.nationalId}

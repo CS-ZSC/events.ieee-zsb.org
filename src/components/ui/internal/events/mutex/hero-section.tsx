@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Flex, Text } from "@chakra-ui/react";
+import { Flex, Text, Button } from "@chakra-ui/react"; 
 import ImageBox from "@/components/ui/internal/image-box";
 import NavButton from "@/components/ui/internal/nav-button";
 import { useWindowType } from "@/hooks/use-window-type";
@@ -10,7 +10,11 @@ interface HeroSectionProps {
   title: string;
   description: string;
   imagePath: string;
-  buttonLink: string;
+  imageAlt?: string;
+  buttonLink?: string;
+  onRegisterClick?: () => void;
+  isRegistered?: boolean;
+  isLoading?: boolean;
   ruleBook?: string;
 }
 
@@ -18,7 +22,11 @@ export default function HeroSection({
   title,
   description,
   imagePath,
+  imageAlt = "Event Image",
   buttonLink,
+  onRegisterClick,
+  isRegistered,
+  isLoading,
   ruleBook,
 }: HeroSectionProps) {
   const { isMobile } = useWindowType();
@@ -34,7 +42,7 @@ export default function HeroSection({
     >
       <ImageBox
         path={imagePath}
-        alt={"Mutex Event"}
+        alt={imageAlt}
         maxWidth="600px"
         mx={isMobile ? "auto" : "0"}
       />
@@ -53,7 +61,25 @@ export default function HeroSection({
           {description}
         </Text>
         <Flex gap={4} flexWrap="wrap">
-          <NavButton link={buttonLink} text="Register Now!" />
+          
+          {onRegisterClick ? (
+            <Button
+              onClick={onRegisterClick}
+              isLoading={isLoading}
+              bg={isRegistered ? "red.600" : "primary-1"}
+              color="white"
+              _hover={{ bg: isRegistered ? "red.700" : "primary-2" }}
+              px={8}
+              py={6}
+              borderRadius="15px" 
+              fontWeight="bold"
+            >
+              {isRegistered ? "Unregister" : "Register Now!"}
+            </Button>
+          ) : buttonLink ? (
+            <NavButton link={buttonLink} text="Register Now!" />
+          ) : null}
+
           {ruleBook && (
             <NavButton
               link={ruleBook}
@@ -67,4 +93,3 @@ export default function HeroSection({
     </Flex>
   );
 }
-

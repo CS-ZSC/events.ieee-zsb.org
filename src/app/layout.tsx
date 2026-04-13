@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   description: "the official events and competitions gate for IEEE Zagazig student branch.",
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,7 +18,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
-      <body data-new-gr-c-s-check-loaded="8.933.0" data-gr-ext-installed="">
+      {/* Added suppressHydrationWarning here to protect against browser extensions */}
+      <body suppressHydrationWarning>
         <Provider>
           <Stack
             gap={0}
@@ -38,4 +38,3 @@ export default function RootLayout({
     </html>
   );
 }
-

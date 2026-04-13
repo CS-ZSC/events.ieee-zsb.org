@@ -1,7 +1,10 @@
-import { Metadata } from "next";
+"use client";
+
+import { useState } from "react";
+import { useParams } from "next/navigation";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
 import { eventsData } from "@/data/events";
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import HeroSection from "@/components/ui/internal/events/mutex/hero-section";
 import SectionTitle from "@/components/ui/internal/section-title";
 import SectionDescription from "@/components/ui/internal/section-description";
@@ -9,50 +12,93 @@ import SectionContainer from "@/components/ui/internal/events/mutex/section-cont
 import NavButton from "@/components/ui/internal/nav-button";
 import AlternativeText from "@/components/ui/internal/alternative-text";
 import PrizesSection from "@/components/ui/internal/events/mutex/prizes-section";
+import { toaster } from "@/components/ui/toaster";
+import api from "@/api";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}): Promise<Metadata> {
-  const { id } = await params;
+export default function CompetitionPage() {
+  const params = useParams();
+  const id = params?.id as string;
+
+  // --- REGISTRATION STATES (TASK 8) ---
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [participantId, setParticipantId] = useState<string | number | null>(null);
 
   const event = eventsData.find((event) =>
     event.competitions.some(
-      (competition) => competition.shortName.toLowerCase() === id.toLowerCase()
+      (competition) => competition.shortName.toLowerCase() === id?.toLowerCase()
     )
   );
 
   const competition = event?.competitions.find(
-    (comp) => comp.shortName.toLowerCase() === id.toLowerCase()
-  );
-
-  return {
-    title: competition?.name || "Competition Not Found",
-    description: competition?.description || "Details of the competition",
-  };
-}
-
-export default async function CompetitionPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-
-  const event = eventsData.find((event) =>
-    event.competitions.some(
-      (competition) => competition.shortName.toLowerCase() === id.toLowerCase()
-    )
-  );
-
-  const competition = event?.competitions.find(
-    (comp) => comp.shortName.toLowerCase() === id.toLowerCase()
+    (comp) => comp.shortName.toLowerCase() === id?.toLowerCase()
   );
 
   if (!event || !competition) {
     return <div>Competition not found</div>;
   }
+
+  const eventId = competition.id;
+
+  // --- REGISTRATION LOGIC ---
+  const handleRegisterToggle = async () => {
+    setIsRegistering(true);
+
+    if (isRegistered) {
+      // --- UNREGISTER LOGIC (DELETE) ---
+      try {
+        await api.delete(`/eventsgate/events/${eventId}/unregister`, {
+          data: { role: "competitor" },
+        });
+
+        setParticipantId(null);
+        setIsRegistered(false);
+        toaster.create({ title: "Unregistered Successfully", type: "info", duration: 3000 });
+      } catch (err: any) {
+        console.error("Unregister error:", err);
+        if (err.response?.status === 401) {
+          toaster.create({
+            title: "Authentication required",
+            description: "Please log in first.",
+            type: "warning",
+          });
+        } else {
+          toaster.create({ title: "Failed to unregister", type: "error" });
+        }
+      }
+    } else {
+      // --- REGISTER LOGIC (POST) ---
+      try {
+        const response = await api.post(`/eventsgate/events/${eventId}/register`, {
+          role: "competitor",
+        });
+
+        const newParticipantId =
+          response.data?.event_participant_id || response.data?.data?.event_participant_id;
+        setParticipantId(newParticipantId);
+
+        setIsRegistered(true);
+        toaster.create({ title: "Registered Successfully!", type: "success", duration: 3000 });
+      } catch (err: any) {
+        console.error("Register error:", err);
+        if (err.response?.status === 401) {
+          toaster.create({
+            title: "Authentication required",
+            description: "Please log in to register.",
+            type: "warning",
+          });
+        } else {
+          toaster.create({
+            title: "Registration Failed",
+            description: "Please try again later.",
+            type: "error",
+          });
+        }
+      }
+    }
+
+    setIsRegistering(false);
+  };
 
   const maxAmount = 20000;
 
@@ -71,7 +117,9 @@ export default async function CompetitionPage({
           title={competition.name}
           description={competition.description}
           imagePath={competition.image}
-          buttonLink={event.registerLink || event.link}
+          onRegisterClick={handleRegisterToggle}
+          isRegistered={isRegistered}
+          isLoading={isRegistering}
           ruleBook={competition.rulebook}
         />
 
@@ -186,11 +234,22 @@ export default async function CompetitionPage({
           <SectionDescription
             description={"What you're waiting? Register now!"}
           />
-          <NavButton link={event.registerLink} text="Register Now" />
+          <Button
+            onClick={handleRegisterToggle}
+            loading={isRegistering}
+            bg={isRegistered ? "red.600" : "primary-1"}
+            color="white"
+            _hover={{ bg: isRegistered ? "red.700" : "primary-2" }}
+            px={8}
+            py={6}
+            borderRadius="15px"
+            fontWeight="bold"
+            fontSize="lg"
+          >
+            {isRegistered ? "Unregister" : "Register Now!"}
+          </Button>
         </SectionContainer>
       </Flex>
     </PageWrapper>
   );
 }
-
-

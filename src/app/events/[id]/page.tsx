@@ -88,7 +88,7 @@ export default function EventDetails() {
     if (isRegistered) {
       // --- UNREGISTER LOGIC (DELETE) ---
       try {
-        await api.delete(`/api/eventsgate/events/${eventId}/unregister`, {
+        await api.delete(`/eventsgate/events/${eventId}/unregister`, {
           data: { role: "competitor" } 
         });
 
@@ -107,7 +107,7 @@ export default function EventDetails() {
     } else {
       // --- REGISTER LOGIC (POST) ---
       try {
-        const response = await api.post(`/api/eventsgate/events/${eventId}/register`, {
+        const response = await api.post(`/eventsgate/events/${eventId}/register`, {
           role: "competitor"
         });
 

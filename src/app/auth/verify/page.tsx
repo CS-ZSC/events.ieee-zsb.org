@@ -30,8 +30,10 @@ export default function Verify() {
   });
 
   const onSubmit = async (data: VerifyFormData) => {
-    const res = await verifyRegistration({ email, code: data.code });
-
+    const res = await verifyRegistration({
+      email,
+      verification_code: data.code,
+    });
     if (res.success) {
       const userData: UserData = {
         email: res.email,

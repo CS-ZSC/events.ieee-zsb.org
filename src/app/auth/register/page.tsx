@@ -12,8 +12,6 @@ import { toaster } from "@/components/ui/toaster";
 import PasswordInput from "@/components/ui/internal/password-input";
 import { RegisterData, registerUser } from "@/api/auth";
 import AvatarUpload from "@/components/ui/internal/auth/avatar-upload";
-import { useSetAtom } from "jotai";
-import { userDataAtom, UserData } from "@/atoms/auth";
 import { redirect } from "next/navigation";
 
 type RegisterFormData = {
@@ -29,7 +27,6 @@ type RegisterFormData = {
 };
 
 export default function Register() {
-  const setUserData = useSetAtom(userDataAtom);
   const {
     register,
     handleSubmit,
@@ -51,57 +48,24 @@ export default function Register() {
   });
 
   const onSubmit = async (data: RegisterFormData) => {
-    if (!data.idFrontImage || !data.idBackImage || !data.profileImage) {
-      toaster.error({
-        closable: true,
-        title: "Missed Fields",
-        description: "Please upload all required images.",
-        duration: 3000,
-      });
-      return;
-    }
-
-    if (data.password !== data.confirmPassword) {
-      toaster.error({
-        closable: true,
-        title: "Passwords do not match!",
-        description: "Please make sure both passwords match.",
-        duration: 3000,
-      });
-      return;
-    }
-
     const requestData: RegisterData = {
-      Name: data.fullName,
-      Email: data.email,
-      PhoneNumber: data.phone,
-      NationalId: data.nationalId,
-      Password: data.password,
-      IDFrontImage: data.idFrontImage,
-      IDBackImage: data.idBackImage,
-      ProfileImage: data.profileImage,
+      name: data.fullName,
+      email: data.email,
+      phone_number: data.phone,
+      national_id: data.nationalId,
+      password: data.password,
+      password_confirmation: data.confirmPassword,
     };
 
     const res = await registerUser(requestData);
 
     if (res.success) {
-      const userData: UserData = {
-        email: res.email,
-        id: res.id,
-        inviteUserToken: res.inviteUserToken,
-        name: res.name,
-        profileImageURL: res.profileImageURL,
-        token: res.token,
-      };
-      setUserData(userData);
-
       toaster.success({
         closable: true,
         title: "Registration Successful",
-        description: "Your account has been created successfully.",
+        description: "Check your email for the verification code.",
         duration: 10000,
       });
-
       redirect(`/auth/verify?email=${encodeURIComponent(data.email)}`);
     } else {
       toaster.error({
@@ -110,7 +74,6 @@ export default function Register() {
         description: res.message,
         duration: 10000,
       });
-      return;
     }
   };
 
@@ -135,6 +98,7 @@ export default function Register() {
                     errorMessage={errors.profileImage?.message}
                   />
                 </Box>
+
                 <Input
                   label="Full Name"
                   placeholder="John Doe"
@@ -176,11 +140,11 @@ export default function Register() {
                     },
                     maxLength: {
                       value: 11,
-                      message: "Phone number cannot be more 11 digits",
+                      message: "Phone number cannot be more than 11 digits",
                     },
                     minLength: {
                       value: 11,
-                      message: "Phone number cannot be less 11 digits",
+                      message: "Phone number cannot be less than 11 digits",
                     },
                   })}
                   isInvalid={!!errors.phone}
@@ -238,7 +202,7 @@ export default function Register() {
                     pattern: {
                       value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9])/,
                       message:
-                        "Password must contain at least one uppercase letter, one lowercase letter, and one special character",
+                        "Password must contain uppercase, lowercase, and special character",
                     },
                   })}
                   isInvalid={!!errors.password}
@@ -250,11 +214,8 @@ export default function Register() {
                   placeholder="Confirm your password"
                   {...register("confirmPassword", {
                     required: "Please confirm your password",
-                    validate: (val: string) => {
-                      if (watch("password") != val) {
-                        return "Passwords do not match";
-                      }
-                    },
+                    validate: (val: string) =>
+                      watch("password") === val || "Passwords do not match",
                   })}
                   isInvalid={!!errors.confirmPassword}
                   errorMessage={errors.confirmPassword?.message}
@@ -266,6 +227,7 @@ export default function Register() {
                 loading={isSubmitting}
                 loadingText="Registering..."
               />
+
               <Stack>
                 <Text color="neutral-3" fontSize="0.8rem" textAlign="center">
                   Your data is securely encrypted and protected. We take your

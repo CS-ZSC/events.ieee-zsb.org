@@ -1,10 +1,14 @@
 "use client";
+
 import React from "react";
-import { Box, Flex, HStack, Heading } from "@chakra-ui/react";
+import { Box, Flex, HStack, Heading, Button } from "@chakra-ui/react";
 import { useWindowType } from "@/hooks/use-window-type";
 import { ColorModeButton, useColorModeValue } from "../../color-mode";
 import dynamic from "next/dynamic";
 import { MoonLoader } from "react-spinners";
+import { useAuth } from "@/atoms/auth"; 
+import Profile from "./profile"; 
+import { useRouter } from "next/navigation"; 
 
 const Logo = dynamic(() => import("@/components/ui/internal/logo"), {
   loading: () => <MoonLoader size={10} />,
@@ -13,7 +17,8 @@ const Logo = dynamic(() => import("@/components/ui/internal/logo"), {
 export default function Header() {
   const { isDesktop } = useWindowType();
   const logoType = useColorModeValue("black", "white");
-  // const [userData] = useAtom(userDataAtom);
+  const userData = useAuth(); 
+  const router = useRouter(); 
 
   return (
     <Flex justify="center" align="center" marginY={16}>
@@ -53,11 +58,11 @@ export default function Header() {
             {isDesktop && <Heading>Events and Competitions</Heading>}
           </HStack>
           <HStack spaceX={4} alignItems="center">
-            {/* {
-              !userData ?
+            {
+              !userData ? (
                 <Button
                   variant="outline"
-                  width={"fit"}
+                  width={"fit-content"} 
                   bgColor={"primary-1"}
                   rounded="xl"
                   padding={"10px 20px"}
@@ -67,11 +72,14 @@ export default function Header() {
                   transition="all"
                   _hover={{ backgroundColor: "primary-10" }}
                   size={isDesktop ? "xl" : "md"}
-                  onClick={() => redirect("/auth/login")}
+                  onClick={() => router.push("/auth/login")} 
                 >
                   Login
-                </Button> : <Profile />
-            } */}
+                </Button>
+              ) : (
+                <Profile /> 
+              )
+            }
             <ColorModeButton />
           </HStack>
         </HStack>

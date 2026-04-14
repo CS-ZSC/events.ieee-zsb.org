@@ -36,7 +36,7 @@ export default function EditProfile() {
                         <Avatar.Image src={userData?.profileImageURL} />
                     </Avatar.Root>
                     <Box>
-                        <Text color="neutral-3" fontSize="xs">User ID: ieee#0000001 <MdOutlineContentCopy style={{displayInline: 'inline'}} /></Text>
+                        <Text color="neutral-3" fontSize="xs">User ID: ieee#0000001 <MdOutlineContentCopy style={{ display: 'inline' }} /></Text>
                     </Box>
                 </Flex>
                 <Input defaultValue={userData?.name} bg="primary-10" border="none" color="neutral-1" p={6} />

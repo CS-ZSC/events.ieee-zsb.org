@@ -8,23 +8,28 @@ const api = axios.create({
   baseURL: API_LINK,
 });
 
-api.interceptors.request.use((config) => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem("user-data");
-    if (stored) {
+
+api.interceptors.request.use(
+  (config) => {
+    const rawData = localStorage.getItem("userData");
+    
+    if (rawData) {
       try {
-        const { token } = JSON.parse(stored);
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
+        const userData = JSON.parse(rawData);
+        if (userData && userData.token) {
+          config.headers.Authorization = `Bearer ${userData.token}`;
         }
       } catch (error) {
-        // Log malformed data for debugging while keeping the app running
-        console.error("Auth Token Parsing Error:", error);
+        console.error("Error parsing user data from localStorage", error);
       }
     }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 // Added Response Interceptor for global error logging
 api.interceptors.response.use(

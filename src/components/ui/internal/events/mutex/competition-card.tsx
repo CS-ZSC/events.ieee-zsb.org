@@ -3,13 +3,16 @@ import Link from "next/link";
 import type { ApiCompetition } from "@/api/competitions";
 import { getChapterLogo } from "@/api/competitions";
 import { Box, Flex, Stack, Text, Image } from "@chakra-ui/react";
+import { FiCheck } from "react-icons/fi";
 
 export default function CompetitionCard({
   competition,
   eventSlug,
+  isRegistered = false,
 }: {
   competition: ApiCompetition;
   eventSlug: string;
+  isRegistered?: boolean;
 }) {
   const chapterLogo = getChapterLogo(competition.chapter_id);
   const detailLink = `/events/${eventSlug}/${competition.id}`;
@@ -53,20 +56,26 @@ export default function CompetitionCard({
           <Text color="neutral-2" fontSize="lg">
             {competition.overview}
           </Text>
-          <Box
+          <Flex
             as="span"
-            bg="primary-1"
-            color="white"
+            align="center"
+            justify="center"
+            gap={2}
+            bg={isRegistered ? "transparent" : "primary-1"}
+            color={isRegistered ? "green.400" : "white"}
+            borderWidth="2px"
+            borderColor={isRegistered ? "green.400" : "transparent"}
             fontWeight="bold"
-            rounded="xl"
-            px={6}
-            py={3}
-            w="full"
+            rounded="10px"
+            w="179px"
+            px="25px"
+            py="8px"
             textAlign="center"
-            fontSize="md"
+            fontSize="18px"
           >
-            Register now!
-          </Box>
+            {isRegistered && <FiCheck />}
+            {isRegistered ? "Registered" : "Register now!"}
+          </Flex>
         </Stack>
       </Link>
     </Flex>

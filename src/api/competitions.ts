@@ -74,3 +74,67 @@ export async function getCompetitionPrizes(competitionId: number) {
     throw error;
   }
 }
+
+// --- Competition Registration ---
+
+export interface CompetitionParticipant {
+  id: number;
+  competition_id: number;
+  event_participant_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventParticipant {
+  id: number;
+  event_id: number;
+  user_id: number;
+  role: "competitor" | "spectator";
+  created_at: string;
+  updated_at: string;
+}
+
+
+export async function registerForCompetition(competitionId: number) {
+  const { data } = await api.post<ApiResponse<CompetitionParticipant>>(
+    `/eventsgate/competitions/${competitionId}/register`
+  );
+  return data;
+}
+
+
+export async function unregisterFromCompetition(competitionId: number) {
+  const { data } = await api.delete<ApiResponse<null>>(
+    `/eventsgate/competitions/${competitionId}/unregister`
+  );
+  return data;
+}
+
+
+export async function ensureEventRegistration(eventSlug: string): Promise<EventParticipant> {
+  try {
+    const { data } = await api.post<ApiResponse<EventParticipant>>(
+      `/eventsgate/events/${eventSlug}/register`,
+      { role: "competitor" }
+    );
+    return data.data;
+  } catch (error: any) {
+    // 409 = already registered — extract participant data from response
+    if (error.response?.status === 409 && error.response?.data?.data) {
+      return error.response.data.data as EventParticipant;
+    }
+    throw error;
+  }
+}
+
+export async function isUserRegisteredForCompetition(competitionId: number, userId: number): Promise<boolean> {
+  try {
+    const { data } = await api.get<ApiResponse<{ event_participant: { user_id: number } }[]>>(
+      `/eventsgate/competitions/${competitionId}/participants`
+    );
+    const participants = data.data || [];
+    return participants.some((p) => p.event_participant?.user_id === userId);
+  } catch {
+    return false;
+  }
+}

@@ -6,7 +6,8 @@ import SectionDescription from "@/components/ui/internal/section-description";
 import { Flex, SimpleGrid, Spinner, Text } from "@chakra-ui/react";
 import CompetitionCard from "@/components/ui/internal/events/mutex/competition-card";
 import { useWindowType } from "@/hooks/use-window-type";
-import { getCompetitions, type ApiCompetition } from "@/api/competitions";
+import { getCompetitions, isUserRegisteredForCompetition, type ApiCompetition } from "@/api/competitions";
+import { useAuth } from "@/atoms/auth";
 
 export default function Competitions({
   eventSlug,
@@ -18,7 +19,9 @@ export default function Competitions({
   competitionsDescription?: string;
 }) {
   const { isDesktop } = useWindowType();
+  const userData = useAuth();
   const [competitions, setCompetitions] = useState<ApiCompetition[]>([]);
+  const [registeredMap, setRegisteredMap] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
@@ -31,17 +34,36 @@ export default function Competitions({
           ? data.filter((c) => String(c.event_id) === String(eventId))
           : data;
         setCompetitions(filtered);
+
+        // Check registration status for each competition
+        if (userData?.id) {
+          const userId = Number(userData.id);
+          Promise.all(
+            filtered.map((c) =>
+              isUserRegisteredForCompetition(c.id, userId)
+                .then((registered) => ({ id: c.id, registered }))
+                .catch(() => ({ id: c.id, registered: false }))
+            )
+          ).then((results) => {
+            if (cancelled) return;
+            const map: Record<number, boolean> = {};
+            results.forEach((r) => { map[r.id] = r.registered; });
+            setRegisteredMap(map);
+          }).finally(() => {
+            if (!cancelled) setLoading(false);
+          });
+        } else {
+          setLoading(false);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
         console.error("Failed to load competitions UI:", err);
         setError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [eventId]);
+  }, [eventId, userData?.id]);
 
   return (
     <Flex
@@ -73,6 +95,7 @@ export default function Competitions({
               key={competition.id}
               competition={competition}
               eventSlug={eventSlug}
+              isRegistered={registeredMap[competition.id] ?? false}
             />
           ))}
         </SimpleGrid>

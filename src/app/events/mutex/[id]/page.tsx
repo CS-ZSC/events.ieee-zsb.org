@@ -9,18 +9,24 @@ import SectionDescription from "@/components/ui/internal/section-description";
 import SectionContainer from "@/components/ui/internal/events/mutex/section-container";
 import PrizesSection from "@/components/ui/internal/events/mutex/prizes-section";
 import { toaster } from "@/components/ui/toaster";
-import api from "@/api";
 import {
   getCompetitionById,
+  registerForCompetition,
+  unregisterFromCompetition,
+  ensureEventRegistration,
+  isUserRegisteredForCompetition,
   type ApiCompetition,
 } from "@/api/competitions";
 import { getEventById, type ApiEvent } from "@/api/events";
 import { useWindowType } from "@/hooks/use-window-type";
+import { useAuth } from "@/atoms/auth";
+import { FiUserPlus, FiUserMinus } from "react-icons/fi";
 
 export default function CompetitionPage() {
   const params = useParams();
   const id = params?.id as string;
   const { isMobile } = useWindowType();
+  const userData = useAuth();
 
   const [competition, setCompetition] = useState<ApiCompetition | null>(null);
   const [eventData, setEventData] = useState<ApiEvent | null>(null);
@@ -30,8 +36,7 @@ export default function CompetitionPage() {
   // --- REGISTRATION STATES ---
   const [isRegistered, setIsRegistered] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [participantId, setParticipantId] = useState<string | number | null>(null);
-
+  const [checkingRegistration, setCheckingRegistration] = useState(false);
   useEffect(() => {
     if (!id) return;
     const competitionId = parseInt(id, 10);
@@ -50,6 +55,15 @@ export default function CompetitionPage() {
         getEventById("mutex")
           .then((ev) => { if (!cancelled) setEventData(ev); })
           .catch((err) => console.warn("Failed to load event image:", err));
+
+        // Check if user is already registered for this competition
+        if (userData?.id) {
+          setCheckingRegistration(true);
+          isUserRegisteredForCompetition(competitionId, Number(userData.id))
+            .then((registered) => { if (!cancelled) setIsRegistered(registered); })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setCheckingRegistration(false); });
+        }
       })
       .catch(() => {
         if (!cancelled) setError("Failed to load competition details.");
@@ -59,57 +73,66 @@ export default function CompetitionPage() {
       });
 
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, userData?.id]);
 
   // --- REGISTRATION LOGIC ---
   const handleRegisterToggle = async () => {
+    if (!userData?.id) {
+      toaster.create({ title: "Authentication required", description: "Please log in to register.", type: "warning" });
+      return;
+    }
+    if (isRegistering) return;
     if (!competition) return;
     setIsRegistering(true);
 
     if (isRegistered) {
+      // --- UNREGISTER FROM COMPETITION ---
       try {
-        await api.delete(`/eventsgate/events/${competition.id}/unregister`, {
-          data: { role: "competitor" },
-        });
-        setParticipantId(null);
+        await unregisterFromCompetition(competition.id);
         setIsRegistered(false);
-        toaster.create({ title: "Unregistered Successfully", type: "info", duration: 3000 });
+        toaster.create({ title: "Unregistered from competition", type: "info", duration: 3000 });
       } catch (err: any) {
         console.error("Unregister error:", err);
-        if (err.response?.status === 401) {
-          toaster.create({
-            title: "Authentication required",
-            description: "Please log in first.",
-            type: "warning",
-          });
+        const status = err.response?.status;
+        const message = err.response?.data?.message;
+        if (status === 401) {
+          toaster.create({ title: "Authentication required", description: "Please log in first.", type: "warning" });
+        } else if (status === 404) {
+          // Not registered anyway — sync state
+          setIsRegistered(false);
         } else {
-          toaster.create({ title: "Failed to unregister", type: "error" });
+          toaster.create({ title: "Failed to unregister", description: message || "Please try again later.", type: "error" });
         }
       }
     } else {
+      // --- REGISTER FOR COMPETITION (two-step) ---
       try {
-        const response = await api.post(`/eventsgate/events/${competition.id}/register`, {
-          role: "competitor",
-        });
-        const newParticipantId =
-          response.data?.event_participant_id || response.data?.data?.event_participant_id;
-        setParticipantId(newParticipantId);
+        // Step 1: Ensure user is registered for the parent event
+        await ensureEventRegistration("mutex");
+
+        // Step 2: Register for the competition (no body needed)
+        await registerForCompetition(competition.id);
         setIsRegistered(true);
         toaster.create({ title: "Registered Successfully!", type: "success", duration: 3000 });
       } catch (err: any) {
         console.error("Register error:", err);
-        if (err.response?.status === 401) {
-          toaster.create({
-            title: "Authentication required",
-            description: "Please log in to register.",
-            type: "warning",
-          });
+        const status = err.response?.status;
+        const message = err.response?.data?.message || "";
+
+        if (status === 401) {
+          toaster.create({ title: "Authentication required", description: "Please log in to register.", type: "warning" });
+        } else if (status === 403) {
+          toaster.create({ title: "Cannot register", description: message || "You don't have permission to register.", type: "warning" });
+        } else if (status === 409) {
+          // Already registered for a competition in this event
+          if (message.toLowerCase().includes("competition")) {
+            setIsRegistered(true);
+          }
+          toaster.create({ title: "Already registered", description: message, type: "info" });
+        } else if (status === 422) {
+          toaster.create({ title: "Team competition", description: "Team registration coming soon.", type: "info" });
         } else {
-          toaster.create({
-            title: "Registration Failed",
-            description: "Please try again later.",
-            type: "error",
-          });
+          toaster.create({ title: "Registration Failed", description: message || "Please try again later.", type: "error" });
         }
       }
     }
@@ -227,20 +250,35 @@ export default function CompetitionPage() {
               )}
             </Flex>
             <Flex gap={4} flexWrap="wrap">
-              <Button
-                onClick={handleRegisterToggle}
-                loading={isRegistering}
-                bg={isRegistered ? "red.600" : "primary-1"}
-                color="white"
-                _hover={{ bg: isRegistered ? "red.700" : "primary-2" }}
-                px={8}
-                py={6}
-                borderRadius="15px"
-                fontWeight="bold"
-                fontSize="lg"
-              >
-                {isRegistered ? "Unregister" : "Register Now!"}
-              </Button>
+              {competition.type === "team" ? (
+                <Text color="neutral-2" fontSize="sm" fontStyle="italic">
+                  Team registration coming soon
+                </Text>
+              ) : (
+                <Button
+                  onClick={handleRegisterToggle}
+                  loading={isRegistering || checkingRegistration}
+                  bg={isRegistered ? "transparent" : "primary-1"}
+                  color={isRegistered ? "red.400" : "white"}
+                  borderWidth="2px"
+                  borderColor={isRegistered ? "red.400" : "transparent"}
+                  _hover={{
+                    bg: isRegistered ? "red.600" : "primary-2",
+                    color: "white",
+                    borderColor: isRegistered ? "red.600" : "transparent",
+                  }}
+                  w="179px"
+                  px="25px"
+                  py="8px"
+                  borderRadius="10px"
+                  fontWeight="bold"
+                  fontSize="18px"
+                  transition="all 0.2s ease"
+                >
+                  {isRegistered ? <FiUserMinus /> : <FiUserPlus />}
+                  {isRegistered ? "Unregister" : "Register Now!"}
+                </Button>
+              )}
             </Flex>
           </Flex>
         </Flex>
@@ -256,23 +294,34 @@ export default function CompetitionPage() {
         />
 
         {/* === REGISTER CTA === */}
-        <SectionContainer>
-          <SectionDescription description="What are you waiting for? Register now!" />
-          <Button
-            onClick={handleRegisterToggle}
-            loading={isRegistering}
-            bg={isRegistered ? "red.600" : "primary-1"}
-            color="white"
-            _hover={{ bg: isRegistered ? "red.700" : "primary-2" }}
-            px={8}
-            py={6}
-            borderRadius="15px"
-            fontWeight="bold"
-            fontSize="lg"
-          >
-            {isRegistered ? "Unregister" : "Register Now!"}
-          </Button>
-        </SectionContainer>
+        {competition.type !== "team" && (
+          <SectionContainer>
+            <SectionDescription description={isRegistered ? "You are registered for this competition!" : "What are you waiting for? Register now!"} />
+            <Button
+              onClick={handleRegisterToggle}
+              loading={isRegistering || checkingRegistration}
+              bg={isRegistered ? "transparent" : "primary-1"}
+              color={isRegistered ? "red.400" : "white"}
+              borderWidth="2px"
+              borderColor={isRegistered ? "red.400" : "transparent"}
+              _hover={{
+                bg: isRegistered ? "red.600" : "primary-2",
+                color: "white",
+                borderColor: isRegistered ? "red.600" : "transparent",
+              }}
+              w="179px"
+              px="25px"
+              py="8px"
+              borderRadius="10px"
+              fontWeight="bold"
+              fontSize="18px"
+              transition="all 0.2s ease"
+            >
+              {isRegistered ? <FiUserMinus /> : <FiUserPlus />}
+              {isRegistered ? "Unregister" : "Register Now!"}
+            </Button>
+          </SectionContainer>
+        )}
       </Flex>
     </PageWrapper>
   );

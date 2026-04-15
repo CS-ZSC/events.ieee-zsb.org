@@ -46,7 +46,12 @@ export default function Page() {
           />
         </SectionContainer>
 
-        {event && <Competitions event={event} />}
+        {event && (
+          <Competitions
+            eventSlug={event.slug || "mutex"}
+            competitionsDescription={event.competitionsDescription}
+          />
+        )}
 
         <SectionContainer>
           <SectionTitle title="Speakers" />

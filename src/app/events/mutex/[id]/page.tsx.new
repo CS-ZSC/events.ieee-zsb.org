@@ -5,9 +5,13 @@ import { useParams } from "next/navigation";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
 import { Box, Button, Flex, Text, Image } from "@chakra-ui/react";
 import { MoonLoader } from "react-spinners";
+import HeroSection from "@/components/ui/internal/events/mutex/hero-section";
+import SectionTitle from "@/components/ui/internal/section-title";
 import SectionDescription from "@/components/ui/internal/section-description";
 import SectionContainer from "@/components/ui/internal/events/mutex/section-container";
+import AlternativeText from "@/components/ui/internal/alternative-text";
 import PrizesSection from "@/components/ui/internal/events/mutex/prizes-section";
+import NavButton from "@/components/ui/internal/nav-button";
 import { toaster } from "@/components/ui/toaster";
 import api from "@/api";
 import {
@@ -47,6 +51,7 @@ export default function CompetitionPage() {
       .then((comp) => {
         if (cancelled) return;
         setCompetition(comp);
+        // Fetch event image separately — don't block the page if it fails
         getEventById("mutex")
           .then((ev) => { if (!cancelled) setEventData(ev); })
           .catch((err) => console.warn("Failed to load event image:", err));
@@ -67,10 +72,12 @@ export default function CompetitionPage() {
     setIsRegistering(true);
 
     if (isRegistered) {
+      // --- UNREGISTER LOGIC (DELETE) ---
       try {
         await api.delete(`/eventsgate/events/${competition.id}/unregister`, {
           data: { role: "competitor" },
         });
+
         setParticipantId(null);
         setIsRegistered(false);
         toaster.create({ title: "Unregistered Successfully", type: "info", duration: 3000 });
@@ -87,13 +94,16 @@ export default function CompetitionPage() {
         }
       }
     } else {
+      // --- REGISTER LOGIC (POST) ---
       try {
         const response = await api.post(`/eventsgate/events/${competition.id}/register`, {
           role: "competitor",
         });
+
         const newParticipantId =
           response.data?.event_participant_id || response.data?.data?.event_participant_id;
         setParticipantId(newParticipantId);
+
         setIsRegistered(true);
         toaster.create({ title: "Registered Successfully!", type: "success", duration: 3000 });
       } catch (err: any) {
@@ -139,6 +149,7 @@ export default function CompetitionPage() {
     );
   }
 
+  // Use event cover_image/logo from backend, or fall back to local image
   const eventImage =
     eventData?.cover_image ||
     eventData?.logo ||
@@ -245,7 +256,7 @@ export default function CompetitionPage() {
           </Flex>
         </Flex>
 
-        {/* === PRIZES SECTION (from API) === */}
+        {/* === PRIZES / TROPHIES SECTION (from API) === */}
         <PrizesSection
           competitionId={competition.id}
           description={

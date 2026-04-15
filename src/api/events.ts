@@ -7,6 +7,8 @@ export interface ApiEvent {
   description: string;
   overview?: string;
   image: string;
+  logo?: string | null;
+  cover_image?: string | null;
   link?: string;
   slug?: string;
 }

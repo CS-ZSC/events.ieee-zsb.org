@@ -28,6 +28,7 @@ import {
   ApiSponsor
 } from "@/api/events";
 import api from "@/api";
+import Competitions from "@/components/ui/internal/events/mutex/competitions";
 
 export default function EventDetails() {
   const params = useParams();
@@ -183,11 +184,11 @@ export default function EventDetails() {
         </SectionContainer>
 
         {/* === COMPETITIONS SECTION === */}
-        <SectionContainer>
-          <SectionTitle title="Competitions" />
-          <SectionDescription description="Explore our diverse set of competitions." />
-          {/* Note: Mohamed Khaled will implement the competitions UI here */}
-        </SectionContainer>
+        <Competitions
+          eventSlug={eventData.slug || eventId}
+          eventId={eventData.id}
+          competitionsDescription="Explore our diverse set of competitions."
+        />
 
         {/* === SPEAKERS SECTION === */}
         <SectionContainer>

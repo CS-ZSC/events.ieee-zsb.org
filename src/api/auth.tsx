@@ -109,7 +109,17 @@ export async function verifyRegistration(
 ): Promise<AuthReturnData | AuthErrorData> {
   try {
     const response = await api.post("/eventsgate/verify-registration", data);
-    return { ...response.data, success: !!response.data.token };
+    const user = response.data.data;
+    return {
+      success: !!response.data.token,
+      token: response.data.token,
+      id: String(user?.id ?? ""),
+      email: user?.email ?? "",
+      name: user?.name ?? "",
+      profileImageURL: user?.avatar_src ?? "",
+      inviteUserToken: "",
+      message: response.data.message,
+    };
   } catch (error: unknown) {
     return {
       success: false,
@@ -131,7 +141,17 @@ export async function loginUser(
 ): Promise<AuthReturnData | AuthErrorData> {
   try {
     const response = await api.post("/eventsgate/login", data);
-    return { ...response.data, success: !!response.data.token };
+    const user = response.data.data;
+    return {
+      success: !!response.data.token,
+      token: response.data.token,
+      id: String(user?.id ?? ""),
+      email: user?.email ?? "",
+      name: user?.name ?? "",
+      profileImageURL: user?.avatar_src ?? "",
+      inviteUserToken: "",
+      message: response.data.message,
+    };
   } catch (error: unknown) {
     return {
       success: false,

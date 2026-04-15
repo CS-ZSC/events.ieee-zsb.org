@@ -21,18 +21,39 @@ export default function PrizesSection({
 
   useEffect(() => {
     if (!competitionId) return;
+    let cancelled = false;
     getCompetitionPrizes(competitionId)
-      .then(setPrizes)
+      .then((data) => {
+        if (cancelled) return;
+        const sorted = [...data].sort((a, b) => a.rank - b.rank);
+        setPrizes(sorted);
+      })
       .catch((err) => {
+        if (cancelled) return;
         console.error("Failed to load prizes UI:", err);
         setError(true);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
   }, [competitionId]);
 
-  const maxAmount = prizes.length > 0
-    ? Math.max(...prizes.map((p) => parseFloat(p.amount.replace(/[^\d.]/g, "")) || 0))
-    : 1;
+  const maxRank = prizes.length > 0 ? Math.max(...prizes.map((p) => p.rank)) || 1 : 1;
+
+  const getRankColor = (rank: number) => {
+    if (rank === 1) return "primary-1";
+    if (rank === 2) return "primary-3";
+    if (rank === 3) return "primary-11";
+    return "primary-10";
+  };
+
+  const getRankLabel = (rank: number) => {
+    if (rank === 1) return "1st place";
+    if (rank === 2) return "2nd place";
+    if (rank === 3) return "3rd place";
+    return `${rank}th place`;
+  };
 
   return (
     <SectionContainer>
@@ -48,14 +69,9 @@ export default function PrizesSection({
       ) : (
         <Flex flexWrap="wrap" justify="center" align="end" gap={8} mt={10}>
           {prizes.map((prize) => {
-            const amount = parseFloat(prize.amount.replace(/[^\d.]/g, "")) || 0;
-            const height = maxAmount > 0 ? (amount / maxAmount) * 400 : 100;
-
-            let bgColor;
-            if (prize.place === "1st") bgColor = "primary-1";
-            else if (prize.place === "2nd") bgColor = "primary-3";
-            else if (prize.place === "3rd") bgColor = "primary-11";
-            else bgColor = "primary-10";
+            const height = maxRank > 0
+              ? ((maxRank - prize.rank + 1) / maxRank) * 400
+              : 100;
 
             return (
               <Flex key={prize.id} direction="column" align="center">
@@ -65,18 +81,23 @@ export default function PrizesSection({
                   fontSize="2xl"
                   mb={2}
                 >
-                  {prize.amount}
+                  {prize.title}
                 </Text>
                 <Box
                   width="170px"
                   height={`${height}px`}
                   rounded="xl"
-                  bg={bgColor}
+                  bg={getRankColor(prize.rank)}
                   transition="height 0.3s ease"
                 />
                 <Text color="neutral-2" mt={2}>
-                  {prize.place} place
+                  {getRankLabel(prize.rank)}
                 </Text>
+                {prize.prize_description && (
+                  <Text color="neutral-3" fontSize="sm" mt={1} textAlign="center" maxW="170px">
+                    {prize.prize_description}
+                  </Text>
+                )}
               </Flex>
             );
           })}

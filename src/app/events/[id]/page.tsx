@@ -22,16 +22,20 @@ import {
   getEventImages, 
   getEventSpeakers, 
   getEventSponsors,
+  isUserRegisteredForEvent,
   ApiEvent,
   ApiImage,
   ApiSpeaker,
   ApiSponsor
 } from "@/api/events";
 import api from "@/api";
+import Competitions from "@/components/ui/internal/events/mutex/competitions";
+import { useAuth } from "@/atoms/auth";
 
 export default function EventDetails() {
   const params = useParams();
   const eventId = params?.id as string; 
+  const userData = useAuth();
 
   // --- DATA STATES ---
   const [eventData, setEventData] = useState<ApiEvent | null>(null);
@@ -46,12 +50,11 @@ export default function EventDetails() {
   // --- REGISTRATION STATES (TASK 8) ---
   const [isRegistered, setIsRegistered] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  
-  // Storing the participant ID for Mohamed's task
-  const [participantId, setParticipantId] = useState<string | number | null>(null);
+  const [checkingRegistration, setCheckingRegistration] = useState(false);
 
   // --- DATA FETCHING (PROMISE.ALL) ---
   useEffect(() => {
+    let cancelled = false;
     const fetchAllData = async () => {
       if (!eventId) return;
 
@@ -65,34 +68,52 @@ export default function EventDetails() {
           getEventSponsors(eventId).catch(() => [])
         ]);
 
+        if (cancelled) return;
         setEventData(eventRes);
         setImages(imagesRes);
         setSpeakers(speakersRes);
         setSponsors(sponsorsRes);
 
+        // Check if user is already registered for this event
+        if (userData?.id) {
+          setCheckingRegistration(true);
+          isUserRegisteredForEvent(eventId, Number(userData.id))
+            .then((registered) => {
+              if (!cancelled && registered) setIsRegistered(true);
+            })
+            .catch(() => {})
+            .finally(() => { if (!cancelled) setCheckingRegistration(false); });
+        }
+
       } catch (err) {
+        if (cancelled) return;
         console.error("Error loading main event details:", err);
         setError("Failed to load event details.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchAllData();
-  }, [eventId]);
+    return () => { cancelled = true; };
+  }, [eventId, userData?.id]);
 
   // --- REGISTRATION LOGIC ---
   const handleRegisterToggle = async () => {
+    if (!userData?.id) {
+      toaster.create({ title: "Authentication required", description: "Please log in to register.", type: "warning" });
+      return;
+    }
+    if (isRegistering) return;
     setIsRegistering(true);
 
     if (isRegistered) {
       // --- UNREGISTER LOGIC (DELETE) ---
       try {
-        await api.delete(`/api/eventsgate/events/${eventId}/unregister`, {
+        await api.delete(`/eventsgate/events/${eventId}/unregister`, {
           data: { role: "competitor" } 
         });
 
-        setParticipantId(null);
         setIsRegistered(false);
         toaster.create({ title: "Unregistered Successfully", type: "info", duration: 3000 });
         
@@ -107,22 +128,25 @@ export default function EventDetails() {
     } else {
       // --- REGISTER LOGIC (POST) ---
       try {
-        const response = await api.post(`/api/eventsgate/events/${eventId}/register`, {
+        const response = await api.post(`/eventsgate/events/${eventId}/register`, {
           role: "competitor"
         });
 
-        const newParticipantId = response.data?.event_participant_id || response.data?.data?.event_participant_id;
-        setParticipantId(newParticipantId); 
-        
         setIsRegistered(true);
         toaster.create({ title: "Registered Successfully!", type: "success", duration: 3000 });
 
       } catch (err: any) {
         console.error("Register error:", err);
-        if (err.response?.status === 401) {
+        const status = err.response?.status;
+        const message = err.response?.data?.message || "";
+        if (status === 401) {
           toaster.create({ title: "Authentication required", description: "Please log in to register.", type: "warning" });
+        } else if (status === 409) {
+          // Already registered — sync state
+          setIsRegistered(true);
+          toaster.create({ title: "Already registered", description: message || "You are already registered for this event.", type: "info" });
         } else {
-          toaster.create({ title: "Registration Failed", description: "Please try again later.", type: "error" });
+          toaster.create({ title: "Registration Failed", description: message || "Please try again later.", type: "error" });
         }
       }
     }
@@ -171,7 +195,7 @@ export default function EventDetails() {
           imageAlt={`${eventData.name} main event image`}
           onRegisterClick={handleRegisterToggle}
           isRegistered={isRegistered}
-          isLoading={isRegistering}
+          isLoading={isRegistering || checkingRegistration}
         />
 
         {/* === OVERVIEW SECTION === */}
@@ -183,11 +207,11 @@ export default function EventDetails() {
         </SectionContainer>
 
         {/* === COMPETITIONS SECTION === */}
-        <SectionContainer>
-          <SectionTitle title="Competitions" />
-          <SectionDescription description="Explore our diverse set of competitions." />
-          {/* Note: Mohamed Khaled will implement the competitions UI here */}
-        </SectionContainer>
+        <Competitions
+          eventSlug={eventData.slug || eventId}
+          eventId={eventData.id}
+          competitionsDescription="Explore our diverse set of competitions."
+        />
 
         {/* === SPEAKERS SECTION === */}
         <SectionContainer>

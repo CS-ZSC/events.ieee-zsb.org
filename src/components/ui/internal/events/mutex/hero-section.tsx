@@ -5,6 +5,7 @@ import { Flex, Text, Button } from "@chakra-ui/react";
 import ImageBox from "@/components/ui/internal/image-box";
 import NavButton from "@/components/ui/internal/nav-button";
 import { useWindowType } from "@/hooks/use-window-type";
+import { FiUserPlus, FiUserMinus } from "react-icons/fi";
 
 interface HeroSectionProps {
   title: string;
@@ -51,8 +52,8 @@ export default function HeroSection({
         maxWidth="600px"
         gap={4}
         mx={isMobile ? "auto" : "0"}
-        justifyContent={isMobile ? "center" : "left"}
-        alignItems={isMobile ? "center" : "left"}
+        justifyContent={isMobile ? "center" : "flex-start"}
+        alignItems={isMobile ? "center" : "flex-start"}
       >
         <Text fontSize={"4xl"} color={"neutral-1"} fontWeight={"bold"}>
           {title}
@@ -66,14 +67,24 @@ export default function HeroSection({
             <Button
               onClick={onRegisterClick}
               loading={isLoading}
-              bg={isRegistered ? "red.600" : "primary-1"}
-              color="white"
-              _hover={{ bg: isRegistered ? "red.700" : "primary-2" }}
-              px={8}
-              py={6}
-              borderRadius="15px" 
+              bg={isRegistered ? "transparent" : "primary-1"}
+              color={isRegistered ? "red.400" : "white"}
+              borderWidth="2px"
+              borderColor={isRegistered ? "red.400" : "transparent"}
+              _hover={{
+                bg: isRegistered ? "red.600" : "primary-2",
+                color: "white",
+                borderColor: isRegistered ? "red.600" : "transparent",
+              }}
+              w="179px"
+              px="25px"
+              py="8px"
+              borderRadius="10px"
+              fontSize="18px" 
               fontWeight="bold"
+              transition="all 0.2s ease"
             >
+              {isRegistered ? <FiUserMinus /> : <FiUserPlus />}
               {isRegistered ? "Unregister" : "Register Now!"}
             </Button>
           ) : buttonLink ? (

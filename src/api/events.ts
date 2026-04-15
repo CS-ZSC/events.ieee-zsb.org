@@ -7,6 +7,8 @@ export interface ApiEvent {
   description: string;
   overview?: string;
   image: string;
+  logo?: string | null;
+  cover_image?: string | null;
   link?: string;
   slug?: string;
 }
@@ -87,5 +89,15 @@ export async function getEventSponsors(eventId: string) {
   } catch (error) {
     console.error(`Error fetching sponsors for event ${eventId}:`, error);
     throw error;
+  }
+}
+
+export async function isUserRegisteredForEvent(eventSlug: string, userId: number): Promise<boolean> {
+  try {
+    const { data } = await api.get<ApiResponse<{ user_id: number }[]>>(`/eventsgate/events/${eventSlug}/participants`);
+    const participants = data.data || [];
+    return participants.some((p) => p.user_id === userId);
+  } catch {
+    return false;
   }
 }

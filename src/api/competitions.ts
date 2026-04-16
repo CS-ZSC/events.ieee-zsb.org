@@ -115,7 +115,7 @@ export async function ensureEventRegistration(eventSlug: string): Promise<EventP
   try {
     const { data } = await api.post<ApiResponse<EventParticipant>>(
       `/eventsgate/events/${eventSlug}/register`,
-      { role: "competitor" }
+      { role: "spectator" }
     );
     return data.data;
   } catch (error: any) {

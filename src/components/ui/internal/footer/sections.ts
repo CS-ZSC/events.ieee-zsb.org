@@ -60,20 +60,12 @@ export const sections: Section[] = [
 		title: "Competitions",
 		links: [
 			{
-				name: "Semaphore",
-				href: "/events/mutex/semaphore",
+				name: "Programming Competition",
+				href: "/events/mutex/competitions/3",
 			},
 			{
-				name: "Deadloock CTF",
-				href: "/events/mutex/deadlock",
-			},
-			{
-				name: "Formula Firefighting",
-				href: "/events/mutex/fire-fighting",
-			},
-			{
-				name: "ECO-Entrepreneurship",
-				href: "/events/mutex/eco-e",
+				name: "Fire Fighting Competition",
+				href: "/events/mutex/competitions/4",
 			},
 		],
 	},

@@ -38,7 +38,7 @@ export default function Profile() {
                 }}
             >
                 <Avatar.Fallback name={userData.name} />
-                <Avatar.Image src={userData.profileImageURL} />
+                <Avatar.Image src={userData.profileImageURL || undefined} />
             </Avatar.Root>
             <AnimatePresence>
                 {isOpen && (
@@ -61,7 +61,7 @@ export default function Profile() {
                             <HStack w="full" justify={"start"} spaceX={8}>
                                 <Avatar.Root size="2xl">
                                     <Avatar.Fallback name={userData.name} />
-                                    <Avatar.Image src={userData.profileImageURL} />
+                                    <Avatar.Image src={userData.profileImageURL || undefined} />
                                 </Avatar.Root>
                                 <Stack spaceY={-2}>
                                     <Heading size="xl" fontWeight={"bold"}>{userData.name}</Heading>

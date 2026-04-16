@@ -47,6 +47,14 @@ export async function getEvents() {
   }
 }
 
+// Get event slug from event ID
+export async function getEventSlugById(eventId: number): Promise<string> {
+  const events = await getEvents();
+  const event = events.find((e) => Number(e.id) === eventId);
+  if (!event?.slug) throw new Error(`Event with ID ${eventId} not found`);
+  return event.slug;
+}
+
 // 2. Get specific event details
 export async function getEventById(eventId: string) {
   try {
@@ -94,9 +102,8 @@ export async function getEventSponsors(eventId: string) {
 
 export async function isUserRegisteredForEvent(eventSlug: string, userId: number): Promise<boolean> {
   try {
-    const { data } = await api.get<ApiResponse<{ user_id: number }[]>>(`/eventsgate/events/${eventSlug}/participants`);
-    const participants = data.data || [];
-    return participants.some((p) => p.user_id === userId);
+    const { data } = await api.get<ApiResponse<{ registered: boolean }>>(`/eventsgate/events/${eventSlug}/check-registration`);
+    return data.data?.registered === true;
   } catch {
     return false;
   }

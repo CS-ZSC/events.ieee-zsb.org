@@ -28,15 +28,17 @@ interface ApiResponse<T> {
   data: T;
 }
 
-const CHAPTER_LOGOS: Record<number, string> = {
-  1: "/images/cs/CS-White.svg",
-  2: "/images/pes/PES-White.svg",
-  3: "/images/ras/RAS-White.svg",
-  4: "/images/wie/WIE-White.svg",
+const CHAPTER_LOGOS: Record<number, { light: string; dark: string }> = {
+  1: { light: "/images/cs/CS-Black.svg", dark: "/images/cs/CS-White.svg" },
+  2: { light: "/images/pes/PES-Black.svg", dark: "/images/pes/PES-White.svg" },
+  3: { light: "/images/ras/RAS-Black.svg", dark: "/images/ras/RAS-White.svg" },
+  4: { light: "/images/wie/WIE-Black.svg", dark: "/images/wie/WIE-White.svg" },
 };
 
-export function getChapterLogo(chapterId: number): string {
-  return CHAPTER_LOGOS[chapterId] || "/images/ieee/ieee-logo-white.svg";
+export function getChapterLogo(chapterId: number, colorMode: "light" | "dark" = "dark"): string {
+  const logos = CHAPTER_LOGOS[chapterId];
+  if (!logos) return colorMode === "light" ? "/images/ieee/ieee-logo-black.svg" : "/images/ieee/ieee-logo-white.svg";
+  return logos[colorMode];
 }
 
 export async function getCompetitions() {
@@ -75,6 +77,35 @@ export async function getCompetitionPrizes(competitionId: number) {
   }
 }
 
+// --- Registration Check ---
+
+export interface EventRegistrationStatus {
+  registered: boolean;
+  role?: "spectator" | "competitor";
+  participant_id?: number;
+}
+
+export interface CompetitionRegistrationStatus {
+  registered: boolean;
+  type?: "individual" | "team";
+  participant_id?: number;
+  team_id?: number;
+}
+
+export async function checkEventRegistration(eventSlug: string): Promise<EventRegistrationStatus> {
+  const { data } = await api.get<ApiResponse<EventRegistrationStatus>>(
+    `/eventsgate/events/${eventSlug}/check-registration`
+  );
+  return data.data;
+}
+
+export async function checkCompetitionRegistration(competitionId: number): Promise<CompetitionRegistrationStatus> {
+  const { data } = await api.get<ApiResponse<CompetitionRegistrationStatus>>(
+    `/eventsgate/competitions/${competitionId}/check-registration`
+  );
+  return data.data;
+}
+
 // --- Competition Registration ---
 
 export interface CompetitionParticipant {
@@ -111,30 +142,22 @@ export async function unregisterFromCompetition(competitionId: number) {
 }
 
 
-export async function ensureEventRegistration(eventSlug: string): Promise<EventParticipant> {
+export async function ensureEventRegistration(eventSlug: string, role: "competitor" | "spectator" = "competitor"): Promise<EventParticipant> {
   try {
     const { data } = await api.post<ApiResponse<EventParticipant>>(
       `/eventsgate/events/${eventSlug}/register`,
-      { role: "spectator" }
+      { role }
     );
     return data.data;
   } catch (error: any) {
     // 409 = already registered — extract participant data from response
     if (error.response?.status === 409 && error.response?.data?.data) {
-      return error.response.data.data as EventParticipant;
+      const d = error.response.data.data;
+      if (d && typeof d.id === "number" && typeof d.user_id === "number") {
+        return d as EventParticipant;
+      }
     }
     throw error;
   }
 }
 
-export async function isUserRegisteredForCompetition(competitionId: number, userId: number): Promise<boolean> {
-  try {
-    const { data } = await api.get<ApiResponse<{ event_participant: { user_id: number } }[]>>(
-      `/eventsgate/competitions/${competitionId}/participants`
-    );
-    const participants = data.data || [];
-    return participants.some((p) => p.event_participant?.user_id === userId);
-  } catch {
-    return false;
-  }
-}

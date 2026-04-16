@@ -65,6 +65,10 @@ export default function Competitions({
     return () => { cancelled = true; };
   }, [eventId, userData?.id]);
 
+  if (competitions.length === 0) {
+    return <div />
+  }
+
   return (
     <Flex
       flexDir={"column"}

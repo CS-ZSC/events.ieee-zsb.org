@@ -6,7 +6,7 @@ import SectionDescription from "@/components/ui/internal/section-description";
 import { Flex, SimpleGrid, Spinner, Text } from "@chakra-ui/react";
 import CompetitionCard from "@/components/ui/internal/events/mutex/competition-card";
 import { useWindowType } from "@/hooks/use-window-type";
-import { getCompetitions, isUserRegisteredForCompetition, type ApiCompetition } from "@/api/competitions";
+import { getCompetitions, checkCompetitionRegistration, type ApiCompetition } from "@/api/competitions";
 import { useAuth } from "@/atoms/auth";
 
 export default function Competitions({
@@ -27,6 +27,9 @@ export default function Competitions({
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(false);
+    setRegisteredMap({});
     getCompetitions()
       .then((data) => {
         if (cancelled) return;
@@ -37,11 +40,10 @@ export default function Competitions({
 
         // Check registration status for each competition
         if (userData?.id) {
-          const userId = Number(userData.id);
           Promise.all(
             filtered.map((c) =>
-              isUserRegisteredForCompetition(c.id, userId)
-                .then((registered) => ({ id: c.id, registered }))
+              checkCompetitionRegistration(c.id)
+                .then((status) => ({ id: c.id, registered: status.registered }))
                 .catch(() => ({ id: c.id, registered: false }))
             )
           ).then((results) => {
@@ -94,14 +96,22 @@ export default function Competitions({
           gap={8}
           p={4}
         >
-          {competitions.map((competition) => (
-            <CompetitionCard
-              key={competition.id}
-              competition={competition}
-              eventSlug={eventSlug}
-              isRegistered={registeredMap[competition.id] ?? false}
-            />
-          ))}
+          {competitions.map((competition) => {
+            const isRegistered = registeredMap[competition.id] ?? false;
+            // Find if user is registered for a different competition in same event
+            const otherRegistered = !isRegistered
+              ? competitions.find((c) => c.id !== competition.id && registeredMap[c.id])
+              : undefined;
+            return (
+              <CompetitionCard
+                key={competition.id}
+                competition={competition}
+                eventSlug={eventSlug}
+                isRegistered={isRegistered}
+                registeredOtherName={otherRegistered?.name}
+              />
+            );
+          })}
         </SimpleGrid>
       )}
     </Flex>

@@ -16,6 +16,7 @@ import SectionTitle from "@/components/ui/internal/section-title";
 import SectionDescription from "@/components/ui/internal/section-description";
 import SectionContainer from "@/components/ui/internal/events/mutex/section-container";
 import AlternativeText from "@/components/ui/internal/alternative-text";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 
 // Import the new toaster utility for Chakra v3
 import { toaster } from "@/components/ui/toaster";
@@ -161,6 +162,12 @@ export default function EventDetails() {
   // --- MAIN RENDER ---
   return (
     <PageWrapper>
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: eventData.name },
+        ]}
+      />
       <Flex
         flexDirection={"column"}
         alignItems="center"

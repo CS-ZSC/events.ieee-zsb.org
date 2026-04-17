@@ -1,6 +1,7 @@
 "use client";
 import { Box, Flex, Heading, Text, Button, Stack } from "@chakra-ui/react";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 import { useRouter } from "next/navigation";
 
 export default function MyTickets() {
@@ -8,6 +9,7 @@ export default function MyTickets() {
 
   return (
     <PageWrapper>
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Profile", href: "/profile" }, { label: "Tickets" }]} />
       <Flex direction="column" align="center" py={10} minH="70vh">
         <Heading mb={12} color="neutral-1" fontSize="2xl" fontWeight="bold">
           My tickets

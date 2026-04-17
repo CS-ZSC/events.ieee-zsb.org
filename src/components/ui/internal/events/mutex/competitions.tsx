@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import SectionTitle from "@/components/ui/internal/section-title";
 import SectionDescription from "@/components/ui/internal/section-description";
 import { Flex, SimpleGrid, Spinner, Text } from "@chakra-ui/react";
 import CompetitionCard from "@/components/ui/internal/events/mutex/competition-card";
 import { useWindowType } from "@/hooks/use-window-type";
-import { getCompetitions, checkCompetitionRegistration, type ApiCompetition } from "@/api/competitions";
 import { useAuth } from "@/atoms/auth";
+import { useCompetitions, useCompetitionRegistrations } from "@/hooks/use-competitions";
 
 export default function Competitions({
   eventSlug,
@@ -20,52 +20,18 @@ export default function Competitions({
 }) {
   const { isDesktop } = useWindowType();
   const userData = useAuth();
-  const [competitions, setCompetitions] = useState<ApiCompetition[]>([]);
-  const [registeredMap, setRegisteredMap] = useState<Record<number, boolean>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { data: competitions = [], isLoading: loadingCompetitions, error: compError } = useCompetitions(eventId);
+  const { data: registeredMap = {}, isLoading: loadingRegs } = useCompetitionRegistrations(competitions, userData?.id);
+  const loading = loadingCompetitions || (!!userData?.id && loadingRegs);
+  const error = !!compError;
 
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(false);
-    setRegisteredMap({});
-    getCompetitions()
-      .then((data) => {
-        if (cancelled) return;
-        const filtered = eventId
-          ? data.filter((c) => String(c.event_id) === String(eventId))
-          : data;
-        setCompetitions(filtered);
-
-        // Check registration status for each competition
-        if (userData?.id) {
-          Promise.all(
-            filtered.map((c) =>
-              checkCompetitionRegistration(c.id)
-                .then((status) => ({ id: c.id, registered: status.registered }))
-                .catch(() => ({ id: c.id, registered: false }))
-            )
-          ).then((results) => {
-            if (cancelled) return;
-            const map: Record<number, boolean> = {};
-            results.forEach((r) => { map[r.id] = r.registered; });
-            setRegisteredMap(map);
-          }).finally(() => {
-            if (!cancelled) setLoading(false);
-          });
-        } else {
-          setLoading(false);
-        }
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.error("Failed to load competitions UI:", err);
-        setError(true);
-        setLoading(false);
-      });
-    return () => { cancelled = true; };
-  }, [eventId, userData?.id]);
+  if (loading) {
+    return (
+      <Flex justifyContent="center" py={8}>
+        <Spinner size="lg" color="primary-1" />
+      </Flex>
+    );
+  }
 
   if (competitions.length === 0) {
     return <div />

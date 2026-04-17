@@ -54,7 +54,7 @@ export default function CreateTeamContent({ competitionId, eventSlug, maxTeamMem
       const userData = localStorage.getItem("user-data");
       if (userData) {
         const parsed = JSON.parse(userData);
-        setUserJoinCode(parsed.join_code || parsed.id?.toString() || "");
+        setUserJoinCode(parsed.join_code || "");
         setUserName(parsed.name || "You");
       }
     } catch {

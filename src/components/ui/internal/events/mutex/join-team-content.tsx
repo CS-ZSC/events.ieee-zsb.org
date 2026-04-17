@@ -28,7 +28,7 @@ export default function JoinTeamContent({ competitionId, eventSlug, onDone, onTe
       const userData = localStorage.getItem("user-data");
       if (userData) {
         const parsed = JSON.parse(userData);
-        setUserJoinCode(parsed.join_code || parsed.id?.toString() || "");
+        setUserJoinCode(parsed.join_code || "");
       }
     } catch {
       // Malformed localStorage data
@@ -125,40 +125,42 @@ export default function JoinTeamContent({ competitionId, eventSlug, onDone, onTe
       <Box w="100%" borderTop="1px solid" borderColor="primary-3" my={1} />
 
       {/* Option 2: Share your code for leader to add you */}
-      <Text color="neutral-3" fontSize="sm">
-        Or share your code with the team leader
-      </Text>
-
       {userJoinCode && (
-        <Box bg="white" p={3} rounded="lg">
-          <QRCodeSVG value={userJoinCode} size={140} />
-        </Box>
-      )}
+        <>
+          <Text color="neutral-3" fontSize="sm">
+            Or share your code with the team leader
+          </Text>
 
-      <HStack
-        gap={2}
-        border="1px solid"
-        borderColor="primary-3"
-        rounded="lg"
-        px={4}
-        py={2.5}
-        bg="primary-12"
-      >
-        <Text fontSize="md" fontFamily="mono" fontWeight="bold">
-          {userJoinCode}
-        </Text>
-        <Button
-          size="xs"
-          color="neutral-2"
-          bg="transparent"
-          _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
-          onClick={handleCopyCode}
-          p={1}
-          minW="auto"
-        >
-          <Icon icon="mdi:content-copy" width={16} height={16} />
-        </Button>
-      </HStack>
+          <Box bg="white" p={3} rounded="lg">
+            <QRCodeSVG value={userJoinCode} size={140} />
+          </Box>
+
+          <HStack
+            gap={2}
+            border="1px solid"
+            borderColor="primary-3"
+            rounded="lg"
+            px={4}
+            py={2.5}
+            bg="primary-12"
+          >
+            <Text fontSize="md" fontFamily="mono" fontWeight="bold">
+              {userJoinCode}
+            </Text>
+            <Button
+              size="xs"
+              color="neutral-2"
+              bg="transparent"
+              _hover={{ bg: "rgba(255, 255, 255, 0.05)" }}
+              onClick={handleCopyCode}
+              p={1}
+              minW="auto"
+            >
+              <Icon icon="mdi:content-copy" width={16} height={16} />
+            </Button>
+          </HStack>
+        </>
+      )}
 
       <CustomButton label="Done" onClick={onDone} w="100%" />
 

@@ -28,7 +28,7 @@ export default function JoinTeamContent({ competitionId, eventSlug, onDone, onTe
       const userData = localStorage.getItem("user-data");
       if (userData) {
         const parsed = JSON.parse(userData);
-        setUserJoinCode(parsed.join_code || "");
+        setUserJoinCode(parsed.inviteUserToken || "");
       }
     } catch {
       // Malformed localStorage data

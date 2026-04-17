@@ -791,7 +791,7 @@ export default function CompetitionPage() {
           existingTeamId={existingTeamId}
           onDone={() => {
             setDialogMode(null);
-            mutateCompReg({ registered: true }, false);
+            mutateCompReg();
             mutateTeam();
           }}
         />
@@ -807,7 +807,7 @@ export default function CompetitionPage() {
           eventSlug={eventSlug}
           onDone={() => setDialogMode(null)}
           onTeamJoined={() => {
-            mutateCompReg({ registered: true }, false);
+            mutateCompReg();
             mutateTeam();
           }}
         />

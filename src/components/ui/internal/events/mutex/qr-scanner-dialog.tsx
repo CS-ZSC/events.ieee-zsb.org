@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Flex, Text, Button, Box, Portal } from "@chakra-ui/react";
 import { Dialog } from "@chakra-ui/react";
 import { Icon } from "@iconify/react";
@@ -17,6 +17,11 @@ export default function QrScannerDialog({ open, onClose, onScan, title = "Scan Q
   const html5QrCodeRef = useRef<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
+  const onScanRef = useRef(onScan);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -44,9 +49,9 @@ export default function QrScannerDialog({ open, onClose, onScan, title = "Scan Q
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText: string) => {
-            onScan(decodedText);
+            onScanRef.current(decodedText);
             scanner.stop().catch(() => {});
-            onClose();
+            onCloseRef.current();
           },
           () => {
             // ignore scan failures (no QR in frame)
@@ -72,7 +77,7 @@ export default function QrScannerDialog({ open, onClose, onScan, title = "Scan Q
       setScanning(false);
       setError(null);
     };
-  }, [open, onScan, onClose]);
+  }, [open]);
 
   return (
     <Dialog.Root

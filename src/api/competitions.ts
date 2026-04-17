@@ -161,3 +161,14 @@ export async function ensureEventRegistration(eventSlug: string, role: "competit
   }
 }
 
+export async function isUserRegisteredForCompetition(competitionId: number, userId: number): Promise<boolean> {
+  try {
+    const { data } = await api.get<ApiResponse<{ event_participant: { user_id: number } }[]>>(
+      `/eventsgate/competitions/${competitionId}/participants`
+    );
+    const participants = data.data || [];
+    return participants.some((p) => p.event_participant?.user_id === userId);
+  } catch {
+    return false;
+  }
+}

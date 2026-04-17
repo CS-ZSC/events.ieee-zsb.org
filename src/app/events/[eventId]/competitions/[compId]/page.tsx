@@ -424,6 +424,7 @@ export default function CompetitionPage() {
                           </Flex>
 
                           <Flex gap={2} mt={1}>
+                            {isTeamLeader && (
                             <Button
                               bg="primary-1"
                               color="white"
@@ -442,6 +443,7 @@ export default function CompetitionPage() {
                               <FiUserPlus />
                               Invite Members
                             </Button>
+                            )}
                             <Button
                               bg="transparent"
                               color="red.400"
@@ -462,7 +464,8 @@ export default function CompetitionPage() {
                           </Flex>
                         </Flex>
 
-                        {/* DIVIDER */}
+                        {/* DIVIDER + SHARE INVITE (leader only) */}
+                        {isTeamLeader && (<>
                         <Box
                           display={isMobile ? "none" : "block"}
                           w="1px"
@@ -532,6 +535,7 @@ export default function CompetitionPage() {
                             Share the code or scan QR to invite teammates
                           </Text>
                         </Flex>
+                        </>)}
                       </Flex>
                     ) : (
                       <Text color="neutral-3" fontSize="sm">Could not load team info</Text>
@@ -620,7 +624,7 @@ export default function CompetitionPage() {
         {/* === REGISTER CTA === */}
         {competition.type === "team" && !registeredOtherCompetition && (
           <SectionContainer>
-            <SectionDescription description={!userData?.id ? "Login to register your team!" : isRegistered ? "Invite more members to your team!" : "Ready to compete? Register your team now!"} />
+            <SectionDescription description={!userData?.id ? "Login to register your team!" : isRegistered && existingTeamId && isTeamLeader ? "Invite more members to your team!" : isRegistered && existingTeamId ? "You're part of a team! Good luck!" : isRegistered ? "Create or join a team to compete!" : "Ready to compete? Register your team now!"} />
             {checkingRegistration ? (
               <MoonLoader size={24} color="var(--chakra-colors-primary-1)" />
             ) : !userData?.id ? (
@@ -642,7 +646,7 @@ export default function CompetitionPage() {
                   Login to Register
                 </Button>
               </Link>
-            ) : isRegistered ? (
+            ) : isRegistered && existingTeamId && isTeamLeader ? (
             <Button
               bg="primary-1"
               color="white"
@@ -660,6 +664,45 @@ export default function CompetitionPage() {
               <FiUserPlus />
               Invite Members
             </Button>
+            ) : isRegistered && existingTeamId ? (
+              <Text color="neutral-2" fontSize="md">You&apos;re part of a team!</Text>
+            ) : isRegistered && !existingTeamId ? (
+            <Flex gap={3} flexWrap="wrap" justify="center">
+              <Button
+                bg="primary-1"
+                color="white"
+                borderWidth="2px"
+                borderColor="transparent"
+                _hover={{ bg: "primary-2", borderColor: "transparent" }}
+                px="25px"
+                py="8px"
+                borderRadius="10px"
+                fontWeight="bold"
+                fontSize="18px"
+                transition="all 0.2s ease"
+                onClick={() => setDialogMode("create")}
+              >
+                <FiUsers />
+                Create a Team
+              </Button>
+              <Button
+                bg="primary-1"
+                color="white"
+                borderWidth="2px"
+                borderColor="transparent"
+                _hover={{ bg: "primary-2", borderColor: "transparent" }}
+                px="25px"
+                py="8px"
+                borderRadius="10px"
+                fontWeight="bold"
+                fontSize="18px"
+                transition="all 0.2s ease"
+                onClick={() => setDialogMode("join")}
+              >
+                <FiUserPlus />
+                Join a Team
+              </Button>
+            </Flex>
             ) : (
             <Flex
               gap={3}

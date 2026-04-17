@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
@@ -12,16 +12,13 @@ import SectionContainer from "@/components/ui/internal/events/mutex/section-cont
 import PrizesSection from "@/components/ui/internal/events/mutex/prizes-section";
 import { toaster } from "@/components/ui/toaster";
 import {
-  getCompetitionById,
   getCompetitions,
   registerForCompetition,
   unregisterFromCompetition,
   ensureEventRegistration,
-  checkCompetitionRegistration,
   checkEventRegistration,
-  type ApiCompetition,
+  checkCompetitionRegistration,
 } from "@/api/competitions";
-import { getEventById, type ApiEvent } from "@/api/events";
 import { useWindowType } from "@/hooks/use-window-type";
 import { useAuth } from "@/atoms/auth";
 import { FiUserPlus, FiUserMinus, FiAlertTriangle, FiUsers } from "react-icons/fi";
@@ -29,8 +26,13 @@ import { Icon } from "@iconify/react";
 import RegistrationDialog from "@/components/ui/internal/events/mutex/registration-dialog";
 import CreateTeamContent from "@/components/ui/internal/events/mutex/create-team-content";
 import JoinTeamContent from "@/components/ui/internal/events/mutex/join-team-content";
-import { getMyTeam, leaveTeam, removeMember, type ApiTeam } from "@/api/team";
+import { leaveTeam, removeMember } from "@/api/team";
 import { QRCodeSVG } from "qrcode.react";
+import { useCompetition } from "@/hooks/use-competitions";
+import { useCompetitionRegistration } from "@/hooks/use-competitions";
+import { useEvent } from "@/hooks/use-event";
+import { useEventRegistration } from "@/hooks/use-event-registration";
+import { useMyTeam } from "@/hooks/use-team";
 
 export default function CompetitionPage() {
   const params = useParams();
@@ -38,126 +40,68 @@ export default function CompetitionPage() {
   const compId = params?.compId as string;
   const { isMobile } = useWindowType();
   const userData = useAuth();
+  const competitionId = compId ? parseInt(compId, 10) : undefined;
+  const validCompId = competitionId && !isNaN(competitionId) ? competitionId : undefined;
 
-  const [competition, setCompetition] = useState<ApiCompetition | null>(null);
-  const [eventData, setEventData] = useState<ApiEvent | null>(null);
-  const [eventSlug, setEventSlug] = useState<string>(eventId || "");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // --- SWR DATA FETCHING ---
+  const { data: competition, isLoading: loadingComp, error: compError } = useCompetition(validCompId);
+  const { data: eventData } = useEvent(eventId);
+  const { data: compRegStatus, isLoading: checkingRegistration, mutate: mutateCompReg } = useCompetitionRegistration(validCompId, userData?.id);
+  const { data: eventRegStatus } = useEventRegistration(eventId, userData?.id);
 
-  // --- REGISTRATION STATES ---
-  const [isRegistered, setIsRegistered] = useState(false);
+  const isRegistered = compRegStatus?.registered ?? false;
+  const existingTeamId = compRegStatus?.team_id ?? null;
+  const isEventRegistered = eventRegStatus?.registered ?? false;
+  const eventRole = eventRegStatus?.role ?? null;
+  const eventSlug = eventId || "";
+
+  const isTeamComp = competition?.type === "team";
+  const { data: teamData, isLoading: loadingTeam, mutate: mutateTeam } = useMyTeam(
+    validCompId,
+    isRegistered && isTeamComp
+  );
+
+  const loading = loadingComp;
+  const error = compError ? "Failed to load competition details." : (!validCompId && compId ? "Invalid competition ID" : null);
+
+  // --- UI STATES ---
   const [isRegistering, setIsRegistering] = useState(false);
-  const [checkingRegistration, setCheckingRegistration] = useState(true);
-  const [existingTeamId, setExistingTeamId] = useState<number | null>(null);
   const [registeredOtherCompetition, setRegisteredOtherCompetition] = useState<{ name: string; id: number } | null>(null);
   const [dialogMode, setDialogMode] = useState<"create" | "join" | null>(null);
-  const [teamData, setTeamData] = useState<ApiTeam | null>(null);
-  const [loadingTeam, setLoadingTeam] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [leavingTeam, setLeavingTeam] = useState(false);
   const [removingMemberId, setRemovingMemberId] = useState<number | null>(null);
-  const [isEventRegistered, setIsEventRegistered] = useState(false);
-  const [eventRole, setEventRole] = useState<string | null>(null);
 
   const isTeamLeader = teamData && userData?.id
     ? String(teamData.leader_event_participant?.user?.id) === String(userData.id)
     : false;
+
+  // Check if user is registered for another competition in same event
   useEffect(() => {
-    if (!compId) return;
-    const competitionId = parseInt(compId, 10);
-    if (isNaN(competitionId)) {
-      setError("Invalid competition ID");
-      setLoading(false);
-      return;
-    }
-
+    if (!competition || competition.type !== "team" || !userData?.id) return;
     let cancelled = false;
-
-    getCompetitionById(competitionId)
-      .then((comp) => {
+    getCompetitions()
+      .then((allComps) => {
         if (cancelled) return;
-        setCompetition(comp);
-        // Use eventId from URL directly as the slug
-        setEventSlug(eventId);
-        getEventById(eventId)
-          .then((ev) => { if (!cancelled && ev) setEventData(ev); })
-          .catch((err) => console.warn("Failed to load event:", err));
-
-        // Check if user is already registered for this competition
-        if (userData?.id) {
-          checkCompetitionRegistration(competitionId)
-            .then((status) => {
-              if (!cancelled) {
-                setIsRegistered(status.registered);
-                if (status.team_id) setExistingTeamId(status.team_id);
-              }
-            })
-            .catch((err) => { console.warn("Registration check failed:", err); })
-            .finally(() => { if (!cancelled) setCheckingRegistration(false); });
-
-          // For team competitions, check if user is registered for another competition in this event
-          if (comp.type === "team") {
-            // Also check event registration status
-            checkEventRegistration(eventId)
-              .then((status) => {
-                if (!cancelled) {
-                  setIsEventRegistered(status.registered);
-                  setEventRole(status.role || null);
-                }
-              })
-              .catch(() => {});
-
-            getCompetitions()
-              .then((allComps) => {
-                if (cancelled) return;
-                const sameEventComps = allComps.filter(
-                  (c) => c.event_id === comp.event_id && c.id !== comp.id
-                );
-                return Promise.all(
-                  sameEventComps.map(async (c) => {
-                    const status = await checkCompetitionRegistration(c.id);
-                    return status.registered ? { name: c.name, id: c.id } : null;
-                  })
-                );
-              })
-              .then((results) => {
-                if (cancelled || !results) return;
-                const other = results.find((r) => r !== null);
-                if (other) setRegisteredOtherCompetition(other);
-              })
-              .catch((err) => { console.warn("Cross-registration check failed:", err); });
-          }
-        } else {
-          if (!cancelled) setCheckingRegistration(false);
-        }
+        const sameEventComps = allComps.filter(
+          (c) => c.event_id === competition.event_id && c.id !== competition.id
+        );
+        return Promise.all(
+          sameEventComps.map(async (c) => {
+            const status = await checkCompetitionRegistration(c.id);
+            return status.registered ? { name: c.name, id: c.id } : null;
+          })
+        );
       })
-      .catch(() => {
-        if (!cancelled) setError("Failed to load competition details.");
+      .then((results) => {
+        if (cancelled || !results) return;
+        const other = results.find((r) => r !== null);
+        if (other) setRegisteredOtherCompetition(other);
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
+      .catch(() => {});
     return () => { cancelled = true; };
-  }, [compId, eventId, userData?.id]);
-
-  // Fetch team data when user is registered for a team competition
-  useEffect(() => {
-    if (!isRegistered || !competition || competition.type !== "team") return;
-    let cancelled = false;
-    setLoadingTeam(true);
-    getMyTeam(competition.id)
-      .then((team) => {
-        if (cancelled) return;
-        setTeamData(team);
-        setExistingTeamId(team.id);
-      })
-      .catch((err) => { console.warn("Failed to load team:", err); })
-      .finally(() => { if (!cancelled) setLoadingTeam(false); });
-    return () => { cancelled = true; };
-  }, [isRegistered, competition?.id]);
+  }, [competition?.id, userData?.id]);
 
   // --- REGISTRATION LOGIC ---
   const handleRegisterToggle = async () => {
@@ -173,7 +117,7 @@ export default function CompetitionPage() {
       // --- UNREGISTER FROM COMPETITION ---
       try {
         await unregisterFromCompetition(competition.id);
-        setIsRegistered(false);
+        mutateCompReg({ registered: false }, false);
         toaster.create({ title: "Unregistered from competition", type: "info", duration: 3000 });
       } catch (err: any) {
         console.error("Unregister error:", err);
@@ -183,7 +127,7 @@ export default function CompetitionPage() {
           toaster.create({ title: "Authentication required", description: "Please log in first.", type: "warning" });
         } else if (status === 404) {
           // Not registered anyway — sync state
-          setIsRegistered(false);
+          mutateCompReg({ registered: false }, false);
         } else {
           toaster.create({ title: "Failed to unregister", description: message || "Please try again later.", type: "error" });
         }
@@ -200,7 +144,7 @@ export default function CompetitionPage() {
 
         // Step 2: Register for the competition (no body needed)
         await registerForCompetition(competition.id);
-        setIsRegistered(true);
+        mutateCompReg({ registered: true }, false);
         toaster.create({ title: "Registered Successfully!", type: "success", duration: 3000 });
       } catch (err: any) {
         console.error("Register error:", err);
@@ -214,7 +158,7 @@ export default function CompetitionPage() {
         } else if (status === 409) {
           // Already registered for a competition in this event
           if (message.toLowerCase().includes("competition")) {
-            setIsRegistered(true);
+            mutateCompReg({ registered: true }, false);
           }
           toaster.create({ title: "Already registered", description: message, type: "info" });
         } else if (status === 422) {
@@ -464,10 +408,7 @@ export default function CompetitionPage() {
                                           return;
                                         }
                                         await removeMember(competition.id, joinCode);
-                                        setTeamData((prev) => prev ? {
-                                          ...prev,
-                                          members: prev.members.filter((mem) => mem.id !== m.id),
-                                        } : null);
+                                        mutateTeam();
                                         toaster.create({ title: `Removed ${m.event_participant.user.name}`, type: "info", duration: 3000 });
                                       } catch (err: any) {
                                         toaster.create({ title: "Failed to remove member", description: err.response?.data?.message || "Please try again.", type: "error" });
@@ -582,6 +523,7 @@ export default function CompetitionPage() {
                             fontSize="sm"
                             fontWeight="bold"
                             onClick={() => setShowQR(true)}
+                            disabled={loadingTeam || !teamData?.join_code}
                           >
                             <Icon icon="mdi:qrcode" width={18} />
                             Show QR Code
@@ -806,14 +748,8 @@ export default function CompetitionPage() {
           existingTeamId={existingTeamId}
           onDone={() => {
             setDialogMode(null);
-            setIsRegistered(true);
-            // Refresh team data
-            getMyTeam(competition.id)
-              .then((team) => {
-                setTeamData(team);
-                setExistingTeamId(team.id);
-              })
-              .catch((err) => { console.warn("Failed to refresh team:", err); });
+            mutateCompReg({ registered: true }, false);
+            mutateTeam();
           }}
         />
       </RegistrationDialog>
@@ -828,14 +764,8 @@ export default function CompetitionPage() {
           eventSlug={eventSlug}
           onDone={() => setDialogMode(null)}
           onTeamJoined={() => {
-            setIsRegistered(true);
-            // Refresh team data
-            getMyTeam(competition.id)
-              .then((team) => {
-                setTeamData(team);
-                setExistingTeamId(team.id);
-              })
-              .catch((err) => { console.warn("Failed to refresh team after join:", err); });
+            mutateCompReg({ registered: true }, false);
+            mutateTeam();
           }}
         />
       </RegistrationDialog>
@@ -863,7 +793,7 @@ export default function CompetitionPage() {
                   Team Invite QR Code
                 </Dialog.Title>
                 <Box bg="white" p={4} rounded="xl">
-                  <QRCodeSVG value={teamData?.join_code || ""} size={180} />
+                  {teamData?.join_code && <QRCodeSVG value={teamData.join_code} size={180} />}
                 </Box>
                 <Text color="neutral-3" fontSize="sm">
                   Scan this code to join <strong>{teamData?.name}</strong>
@@ -966,9 +896,8 @@ export default function CompetitionPage() {
                       setLeavingTeam(true);
                       try {
                         await leaveTeam(competition.id);
-                        setIsRegistered(false);
-                        setExistingTeamId(null);
-                        setTeamData(null);
+                        mutateCompReg({ registered: false }, false);
+                        mutateTeam(undefined, false);
                         setShowLeaveConfirm(false);
                         toaster.create({ title: "Left team", type: "info", duration: 3000 });
                       } catch (err: any) {

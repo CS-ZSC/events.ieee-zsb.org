@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Flex, Text, Box, Image, Button, Portal } from "@chakra-ui/react";
@@ -21,18 +21,7 @@ import AlternativeText from "@/components/ui/internal/alternative-text";
 import { toaster } from "@/components/ui/toaster";
 
 // Import the API functions and the Axios instance
-import { 
-  getEventById, 
-  getEventImages, 
-  getEventSpeakers, 
-  getEventSponsors,
-  ApiEvent,
-  ApiImage,
-  ApiSpeaker,
-  ApiSponsor
-} from "@/api/events";
 import {
-  checkEventRegistration,
   ensureEventRegistration,
   checkCompetitionRegistration,
   getCompetitions,
@@ -40,81 +29,35 @@ import {
 import api from "@/api";
 import Competitions from "@/components/ui/internal/events/mutex/competitions";
 import { useAuth } from "@/atoms/auth";
+import { useEvent, useEventImages, useEventSpeakers, useEventSponsors } from "@/hooks/use-event";
+import { useEventRegistration } from "@/hooks/use-event-registration";
 
 export default function EventDetails() {
   const params = useParams();
   const eventId = params?.eventId as string; 
   const userData = useAuth();
 
-  // --- DATA STATES ---
-  const [eventData, setEventData] = useState<ApiEvent | null>(null);
-  const [images, setImages] = useState<ApiImage[]>([]);
-  const [speakers, setSpeakers] = useState<ApiSpeaker[]>([]);
-  const [sponsors, setSponsors] = useState<ApiSponsor[]>([]);
+  // --- DATA FETCHING (SWR) ---
+  const { data: eventData, isLoading: loadingEvent, error: eventError } = useEvent(eventId);
+  const { data: images } = useEventImages(eventId);
+  const { data: speakers } = useEventSpeakers(eventId);
+  const { data: sponsors } = useEventSponsors(eventId);
+  const { data: regStatus, isLoading: checkingRegistration, mutate: mutateRegistration } = useEventRegistration(
+    eventData?.slug || eventId,
+    userData?.id
+  );
+
+  const loading = loadingEvent;
+  const error = eventError ? "Failed to load event details." : null;
+  const isRegistered = regStatus?.registered ?? false;
+  const eventRole = regStatus?.role || null;
   
   // --- UI STATES ---
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // --- REGISTRATION STATES ---
-  const [isRegistered, setIsRegistered] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
-  const [checkingRegistration, setCheckingRegistration] = useState(false);
-  const [eventRole, setEventRole] = useState<string | null>(null);
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
   const [showUnregisterDialog, setShowUnregisterDialog] = useState(false);
   const [competitionNames, setCompetitionNames] = useState<string[]>([]);
   const [loadingUnregisterInfo, setLoadingUnregisterInfo] = useState(false);
-
-  // --- DATA FETCHING (PROMISE.ALL) ---
-  useEffect(() => {
-    let cancelled = false;
-    const fetchAllData = async () => {
-      if (!eventId) return;
-
-      try {
-        setLoading(true);
-
-        const [eventRes, imagesRes, speakersRes, sponsorsRes] = await Promise.all([
-          getEventById(eventId),
-          getEventImages(eventId).catch(() => []), 
-          getEventSpeakers(eventId).catch(() => []),
-          getEventSponsors(eventId).catch(() => [])
-        ]);
-
-        if (cancelled) return;
-        setEventData(eventRes);
-        setImages(imagesRes);
-        setSpeakers(speakersRes);
-        setSponsors(sponsorsRes);
-
-        // Check if user is already registered for this event
-        if (userData?.id) {
-          setCheckingRegistration(true);
-          const slug = eventRes.slug || eventId;
-          checkEventRegistration(slug)
-            .then((status) => {
-              if (!cancelled) {
-                setIsRegistered(status.registered);
-                setEventRole(status.role || null);
-              }
-            })
-            .catch(() => {})
-            .finally(() => { if (!cancelled) setCheckingRegistration(false); });
-        }
-
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Error loading main event details:", err);
-        setError("Failed to load event details.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    fetchAllData();
-    return () => { cancelled = true; };
-  }, [eventId, userData?.id]);
 
   // --- REGISTRATION LOGIC ---
   const handleRegisterToggle = () => {
@@ -158,14 +101,13 @@ export default function EventDetails() {
     const slug = eventData.slug || eventId;
     try {
       await ensureEventRegistration(slug, "spectator");
-      setIsRegistered(true);
-      setEventRole("spectator");
+      mutateRegistration({ registered: true, role: "spectator" }, false);
       setShowRegisterDialog(false);
       toaster.create({ title: "Registered!", description: "You have been registered as an attendee. A ticket has been added to your profile.", type: "success", duration: 5000 });
     } catch (err: any) {
       const message = err.response?.data?.message || "Registration failed. Please try again.";
       if (err.response?.status === 409) {
-        setIsRegistered(true);
+        mutateRegistration({ registered: true }, false);
         setShowRegisterDialog(false);
         toaster.create({ title: "Already registered", description: message, type: "info" });
       } else if (err.response?.status === 401) {
@@ -182,8 +124,7 @@ export default function EventDetails() {
     setIsRegistering(true);
     try {
       await api.delete(`/eventsgate/events/${eventData.slug || eventId}/unregister`);
-      setIsRegistered(false);
-      setEventRole(null);
+      mutateRegistration({ registered: false }, false);
       setShowUnregisterDialog(false);
       toaster.create({ title: "Unregistered Successfully", type: "info", duration: 3000 });
     } catch (err: any) {
@@ -256,7 +197,7 @@ export default function EventDetails() {
                 <Icon icon="mdi:ticket-confirmation-outline" width={24} color="var(--chakra-colors-primary-1)" />
                 <Flex flexDir="column">
                   <Text color="neutral-1" fontWeight="bold" fontSize="md">
-                    You&apos;re registered as a {eventRole || "spectator"}
+                    You&apos;re registered{eventRole ? ` as a ${eventRole}` : ""}
                   </Text>
                   <Text color="neutral-3" fontSize="sm">
                     Your ticket is available in your profile.
@@ -300,11 +241,11 @@ export default function EventDetails() {
         {/* === SPEAKERS SECTION === */}
         <SectionContainer>
           <SectionTitle title="Speakers" />
-          {speakers.length === 0 ? (
+          {(speakers ?? []).length === 0 ? (
             <AlternativeText text="Stay tuned for our speakers announcements!" />
           ) : (
             <Flex flexWrap="wrap" justify="center" gap={8} mt={10}>
-              {speakers.map((speaker) => (
+              {(speakers ?? []).map((speaker) => (
                 <Flex key={speaker.id} direction="column" align="center">
                    <Box width="150px" height="150px" overflow="hidden" borderRadius="full" mb={4}>
                       <Image 
@@ -326,11 +267,11 @@ export default function EventDetails() {
         {/* === SPONSORS SECTION === */}
         <SectionContainer>
           <SectionTitle title="Sponsors" />
-          {sponsors.length === 0 ? (
+          {(sponsors ?? []).length === 0 ? (
             <AlternativeText text="Stay tuned for our sponsors announcements!" />
           ) : (
             <Flex flexWrap="wrap" justify="center" gap={8} mt={10}>
-              {sponsors.map((sponsor) => (
+              {(sponsors ?? []).map((sponsor) => (
                 <Flex key={sponsor.id} align="center" justify="center" p={4}>
                    <Image 
                      src={sponsor.logo || "https://via.placeholder.com/150?text=No+Logo"} 

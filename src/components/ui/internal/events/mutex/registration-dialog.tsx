@@ -32,7 +32,7 @@ export default function RegistrationDialog({ open, onClose, title, children }: P
           <Dialog.Content
             bg="primary-5"
             border="1px solid"
-            borderColor="#005481"
+            borderColor="primary-3"
             borderRadius={isMobile ? "0" : "10px"}
             color="neutral-1"
             p={6}

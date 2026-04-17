@@ -47,13 +47,13 @@ export default function CompetitionPage() {
   const { data: competition, isLoading: loadingComp, error: compError } = useCompetition(validCompId);
   const { data: eventData } = useEvent(eventId);
   const { data: compRegStatus, isLoading: checkingRegistration, mutate: mutateCompReg } = useCompetitionRegistration(validCompId, userData?.id);
-  const { data: eventRegStatus } = useEventRegistration(eventId, userData?.id);
+  const { data: eventRegStatus } = useEventRegistration(eventData?.slug || eventId, userData?.id);
 
   const isRegistered = compRegStatus?.registered ?? false;
   const existingTeamId = compRegStatus?.team_id ?? null;
   const isEventRegistered = eventRegStatus?.registered ?? false;
   const eventRole = eventRegStatus?.role ?? null;
-  const eventSlug = eventId || "";
+  const eventSlug = eventData?.slug || eventId || "";
 
   const isTeamComp = competition?.type === "team";
   const { data: teamData, isLoading: loadingTeam, mutate: mutateTeam } = useMyTeam(
@@ -79,7 +79,7 @@ export default function CompetitionPage() {
 
   // Check if user is registered for another competition in same event
   useEffect(() => {
-    if (!competition || competition.type !== "team" || !userData?.id) return;
+    if (!competition || !userData?.id) return;
     let cancelled = false;
     getCompetitions()
       .then((allComps) => {
@@ -176,7 +176,7 @@ export default function CompetitionPage() {
     return (
       <PageWrapper>
         <Flex justify="center" align="center" h="50vh">
-          <MoonLoader size={50} color="#006699" />
+          <MoonLoader size={50} color="var(--chakra-colors-primary-1)" />
         </Flex>
       </PageWrapper>
     );
@@ -826,7 +826,7 @@ export default function CompetitionPage() {
             <Dialog.Content
               bg="primary-5"
               border="1px solid"
-              borderColor="#005481"
+              borderColor="primary-3"
               borderRadius="10px"
               color="neutral-1"
               p={6}
@@ -900,7 +900,7 @@ export default function CompetitionPage() {
             <Dialog.Content
               bg="primary-5"
               border="1px solid"
-              borderColor="#005481"
+              borderColor="primary-3"
               borderRadius="10px"
               color="neutral-1"
               p={6}

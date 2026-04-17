@@ -92,7 +92,7 @@ export default function QrScannerDialog({ open, onClose, onScan, title = "Scan Q
           <Dialog.Content
             bg="primary-5"
             border="1px solid"
-            borderColor="#005481"
+            borderColor="primary-3"
             borderRadius="10px"
             color="neutral-1"
             p={6}

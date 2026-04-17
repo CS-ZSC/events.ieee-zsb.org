@@ -17,7 +17,7 @@ import { getEvents, ApiEvent } from "@/api/events";
 const Hero = dynamic(() => import("@/components/ui/internal/hero"), {
   loading: () => (
     <Flex justify="center" align="center" h="40vh">
-      <MoonLoader size={50} color="#00529B" />
+      <MoonLoader size={50} color="var(--chakra-colors-primary-1)" />
     </Flex>
   ),
   ssr: false,
@@ -55,7 +55,7 @@ export default function Home() {
           
           {loading && (
             <Flex justify="center" my={10}>
-              <MoonLoader size={50} color="#00529B" />
+              <MoonLoader size={50} color="var(--chakra-colors-primary-1)" />
             </Flex>
           )}
           

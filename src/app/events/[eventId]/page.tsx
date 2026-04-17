@@ -142,7 +142,7 @@ export default function EventDetails() {
     return (
       <PageWrapper>
         <Flex justify="center" align="center" h="50vh">
-          <MoonLoader size={50} color="#00529B" />
+          <MoonLoader size={50} color="var(--chakra-colors-primary-1)" />
         </Flex>
       </PageWrapper>
     );
@@ -300,7 +300,7 @@ export default function EventDetails() {
             <Dialog.Content
               bg="primary-5"
               border="1px solid"
-              borderColor="#005481"
+              borderColor="primary-3"
               borderRadius="10px"
               color="neutral-1"
               p={6}
@@ -360,7 +360,7 @@ export default function EventDetails() {
             <Dialog.Content
               bg="primary-5"
               border="1px solid"
-              borderColor="#005481"
+              borderColor="primary-3"
               borderRadius="10px"
               color="neutral-1"
               p={6}
@@ -374,7 +374,7 @@ export default function EventDetails() {
                   You are currently registered as <strong>{eventRole || "attendee"}</strong> for <strong>{eventData.name}</strong>.
                 </Text>
                 {loadingUnregisterInfo ? (
-                  <MoonLoader size={20} color="#00529B" />
+                  <MoonLoader size={20} color="var(--chakra-colors-primary-1)" />
                 ) : competitionNames.length > 0 ? (
                   <Box bg="red.900/20" border="1px solid" borderColor="red.600/40" rounded="lg" px={4} py={3} w="100%">
                     <Text color="red.300" fontSize="sm" fontWeight="bold" mb={1}>

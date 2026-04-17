@@ -98,6 +98,24 @@ export default function Step3Leader({
       }
       const team = await createTeam(competitionId, teamName);
       setCreatedTeamId(team.id);
+
+      // Process any pending members that were queued before team creation
+      const pendingMembers = members.filter((m) => m.status === "pending");
+      for (const member of pendingMembers) {
+        try {
+          const tm = await addMember(competitionId, member.joinCode);
+          setMembers((prev) =>
+            prev.map((m) =>
+              m.joinCode === member.joinCode
+                ? { ...m, name: tm.event_participant.user.name, status: "added" as const, teamMember: tm }
+                : m
+            )
+          );
+        } catch {
+          // Member add failed — leave as pending (already queued)
+        }
+      }
+
       setLoading(false);
       toaster.success({
         closable: true,

@@ -158,6 +158,10 @@ export default function CreateTeamContent({ competitionId, eventSlug, maxTeamMem
         }
         setCreated(true);
         toaster.create({ closable: true, title: "Already Registered", description: message, type: "info", duration: 5000 });
+      } else if (status === 403) {
+        toaster.error({ closable: true, title: "Not Registered for Event", description: message || "You must register for the event before creating a team.", duration: 5000 });
+      } else if (status === 422) {
+        toaster.error({ closable: true, title: "Teams Not Supported", description: message || "This competition does not support teams.", duration: 5000 });
       } else {
         toaster.error({ closable: true, title: "Team Creation Failed", description: message, duration: 5000 });
       }
@@ -249,7 +253,7 @@ export default function CreateTeamContent({ competitionId, eventSlug, maxTeamMem
   if (created) {
     const displayMembers = existingTeamId ? existingMembers : [];
     const memberCount = existingTeamId
-      ? existingMembers.length + members.filter((m) => !existingMembers.some((em) => em.name === m.joinCode)).length
+      ? existingMembers.length + members.filter((m) => !existingMembers.some((em) => em.name === m.name)).length
       : totalMembers;
 
     return (

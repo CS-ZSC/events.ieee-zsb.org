@@ -19,7 +19,7 @@ export default function ProfileHome() {
     return (
       <PageWrapper>
         <Flex justify="center" align="center" h="60vh">
-           <MoonLoader color="#006699" />
+           <MoonLoader color="var(--chakra-colors-primary-1)" />
         </Flex>
       </PageWrapper>
     );

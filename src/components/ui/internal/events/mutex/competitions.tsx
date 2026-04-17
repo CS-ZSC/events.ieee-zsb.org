@@ -33,6 +33,14 @@ export default function Competitions({
     );
   }
 
+  if (error) {
+    return (
+      <Flex justifyContent="center" py={8}>
+        <Text color="red.400">Failed to load competitions.</Text>
+      </Flex>
+    );
+  }
+
   if (competitions.length === 0) {
     return <div />
   }
@@ -49,19 +57,12 @@ export default function Competitions({
         description={competitionsDescription || "Explore our diverse set of competitions."}
       />
 
-      {loading ? (
-        <Spinner color="primary-1" size="xl" />
-      ) : error ? (
-        <Text color="red.400">Failed to load competitions.</Text>
-      ) : competitions.length === 0 ? (
-        <Text color="neutral-2">No competitions available yet.</Text>
-      ) : (
-        <SimpleGrid
-          columns={isDesktop ? 3 : 1}
-          justifyContent="center"
-          gap={8}
-          p={4}
-        >
+      <SimpleGrid
+        columns={isDesktop ? 3 : 1}
+        justifyContent="center"
+        gap={8}
+        p={4}
+      >
           {competitions.map((competition) => {
             const isRegistered = registeredMap[competition.id] ?? false;
             // Find if user is registered for a different competition in same event
@@ -79,7 +80,6 @@ export default function Competitions({
             );
           })}
         </SimpleGrid>
-      )}
     </Flex>
   );
 }

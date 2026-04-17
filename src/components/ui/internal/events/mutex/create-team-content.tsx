@@ -389,40 +389,40 @@ export default function CreateTeamContent({ competitionId, eventSlug, maxTeamMem
           </VStack>
         )}
 
-        {/* Share your invite info */}
-        <VStack gap={2} align="center" pt={2}>
-          <Text fontSize="sm" color="neutral-2">Share your invite info with members:</Text>
-          {(teamJoinCode || userJoinCode) && (
+        {/* Share your invite info — only show after team data is loaded */}
+        {!loadingTeam && teamJoinCode && (
+          <VStack gap={2} align="center" pt={2}>
+            <Text fontSize="sm" color="neutral-2">Share your invite info with members:</Text>
             <Box bg="white" p={2} rounded="md">
-              <QRCodeSVG value={teamJoinCode || userJoinCode} size={100} />
+              <QRCodeSVG value={teamJoinCode} size={100} />
             </Box>
-          )}
-          <HStack
-            gap={2}
-            border="1px solid"
-            borderColor="primary-3"
-            rounded="lg"
-            px={4} py={2}
-            bg="primary-12"
-          >
-            <Text fontSize="sm" fontFamily="mono" fontWeight="bold">{teamJoinCode || userJoinCode}</Text>
-            <Button
-              size="xs"
-              color="neutral-2"
-              bg="transparent"
-              _hover={{ bg: "rgba(255,255,255,0.05)" }}
-              onClick={() => {
-                navigator.clipboard.writeText(teamJoinCode || userJoinCode).catch(() => {});
-                toaster.success({ closable: true, title: "Copied!", duration: 2000 });
-              }}
-              p={1} minW="auto"
+            <HStack
+              gap={2}
+              border="1px solid"
+              borderColor="primary-3"
+              rounded="lg"
+              px={4} py={2}
+              bg="primary-12"
             >
-              <Icon icon="mdi:content-copy" width={14} height={14} />
-            </Button>
-          </HStack>
-        </VStack>
+              <Text fontSize="sm" fontFamily="mono" fontWeight="bold">{teamJoinCode}</Text>
+              <Button
+                size="xs"
+                color="neutral-2"
+                bg="transparent"
+                _hover={{ bg: "rgba(255,255,255,0.05)" }}
+                onClick={() => {
+                  navigator.clipboard.writeText(teamJoinCode).catch(() => {});
+                  toaster.success({ closable: true, title: "Copied!", duration: 2000 });
+                }}
+                p={1} minW="auto"
+              >
+                <Icon icon="mdi:content-copy" width={14} height={14} />
+              </Button>
+            </HStack>
+          </VStack>
+        )}
 
-        <CustomButton label="Done" onClick={onDone} w="100%" />
+        {!loadingTeam && <CustomButton label="Done" onClick={onDone} w="100%" />}
 
         <QrScannerDialog
           open={showScanner}

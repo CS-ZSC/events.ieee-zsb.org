@@ -30,9 +30,10 @@ import { leaveTeam, removeMember } from "@/api/team";
 import { QRCodeSVG } from "qrcode.react";
 import { useCompetition } from "@/hooks/use-competitions";
 import { useCompetitionRegistration } from "@/hooks/use-competitions";
-import { useEvent } from "@/hooks/use-event";
+import { useEvent, useEventImages } from "@/hooks/use-event";
 import { useEventRegistration } from "@/hooks/use-event-registration";
 import { useMyTeam } from "@/hooks/use-team";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 
 export default function CompetitionPage() {
   const params = useParams();
@@ -46,6 +47,7 @@ export default function CompetitionPage() {
   // --- SWR DATA FETCHING ---
   const { data: competition, isLoading: loadingComp, error: compError } = useCompetition(validCompId);
   const { data: eventData } = useEvent(eventId);
+  const { data: eventImages } = useEventImages(eventId);
   const { data: compRegStatus, isLoading: checkingRegistration, mutate: mutateCompReg } = useCompetitionRegistration(validCompId, userData?.id);
   const { data: eventRegStatus } = useEventRegistration(eventData?.slug || eventId, userData?.id);
 
@@ -195,12 +197,19 @@ export default function CompetitionPage() {
   }
 
   const eventImage =
-    eventData?.cover_image ||
-    eventData?.logo ||
-    `/events/${eventSlug}/${eventSlug}.webp`;
+    (eventImages && eventImages.length > 0 && eventImages[0].url)
+      ? eventImages[0].url
+      : (eventData?.cover_image || eventData?.logo || eventData?.image || `/events/${eventSlug}/${eventSlug}.webp`);
 
   return (
     <PageWrapper>
+      <Breadcrumb
+        items={[
+          { label: "Home", href: "/" },
+          { label: eventData?.name || "Event", href: `/events/${eventId}` },
+          { label: competition.name },
+        ]}
+      />
       <Flex
         flexDirection="column"
         alignItems="center"
@@ -227,16 +236,17 @@ export default function CompetitionPage() {
             align="center"
             justify="center"
             overflow="hidden"
-            w={isMobile ? "full" : "444px"}
-            h="318px"
+            w={isMobile ? "full" : "clamp(400px, 35vw, 550px)"}
+            h={isMobile ? "260px" : "auto"}
             mx={isMobile ? "auto" : "0"}
+            flexShrink={0}
           >
             <Image
               src={eventImage}
               alt={competition.name}
               w="100%"
-              h="100%"
-              objectFit="cover"
+              h={isMobile ? "100%" : "auto"}
+              objectFit={isMobile ? "cover" : undefined}
             />
           </Flex>
           <Flex
@@ -310,15 +320,15 @@ export default function CompetitionPage() {
                   <Flex
                     align="center"
                     gap={2}
-                    bg="orange.950"
+                    bg={{ _light: "orange.100", _dark: "orange.950" }}
                     border="1px solid"
-                    borderColor="orange.700"
+                    borderColor={{ _light: "orange.300", _dark: "orange.700" }}
                     rounded="lg"
                     px={4}
                     py={3}
                   >
                     <FiAlertTriangle color="orange" />
-                    <Text color="orange.300" fontSize="sm">
+                    <Text color={{ _light: "orange.700", _dark: "orange.300" }} fontSize="sm">
                       You&apos;re already registered for{" "}
                       <Link href={`/events/${eventSlug}/competitions/${registeredOtherCompetition.id}`} style={{ fontWeight: "bold", textDecoration: "underline" }}>
                         {registeredOtherCompetition.name}
@@ -330,15 +340,15 @@ export default function CompetitionPage() {
                   <Flex
                     align="center"
                     gap={2}
-                    bg="blue.950"
+                    bg={{ _light: "blue.100", _dark: "blue.950" }}
                     border="1px solid"
-                    borderColor="blue.700"
+                    borderColor={{ _light: "blue.300", _dark: "blue.700" }}
                     rounded="lg"
                     px={4}
                     py={3}
                   >
                     <Icon icon="mdi:eye-outline" width={18} color="var(--chakra-colors-blue-300)" />
-                    <Text color="blue.300" fontSize="sm">
+                    <Text color={{ _light: "blue.700", _dark: "blue.300" }} fontSize="sm">
                       You&apos;re registered as a spectator for this event. To compete, unregister from the event page first.
                     </Text>
                   </Flex>
@@ -372,7 +382,7 @@ export default function CompetitionPage() {
                                 {teamData.name}
                               </Text>
                             </Flex>
-                            <Text color="neutral-3" fontSize="xs" bg="primary-4" px={2} py={0.5} rounded="full">
+                            <Text color="rgba(255,255,255,0.5)" fontSize="xs" bg="primary-4" px={2.5} py={0.5} rounded="full" ml={2}>
                               {teamData.members.length}/{competition.max_team_members}
                             </Text>
                           </Flex>
@@ -381,8 +391,8 @@ export default function CompetitionPage() {
                             {teamData.members.map((m) => (
                               <Flex key={m.id} align="center" gap={2} py={1} justify="space-between">
                                 <Flex align="center" gap={2}>
-                                  <Icon icon="mdi:account" width={16} color="var(--chakra-colors-neutral-3)" />
-                                  <Text color="neutral-2" fontSize="sm">{m.event_participant.user.name}</Text>
+                                  <Icon icon="mdi:account" width={16} color="rgba(255,255,255,0.5)" />
+                                  <Text color="rgba(255,255,255,0.8)" fontSize="sm">{m.event_participant.user.name}</Text>
                                   {m.event_participant_id === teamData.leader_event_participant_id && (
                                     <Text color="primary-1" fontSize="xs" fontWeight="bold">Leader</Text>
                                   )}
@@ -423,55 +433,57 @@ export default function CompetitionPage() {
                             ))}
                           </Flex>
 
-                          <Flex gap={2} mt={1}>
-                            {isTeamLeader && (
-                            <Button
-                              bg="primary-1"
-                              color="white"
-                              borderWidth="2px"
-                              borderColor="transparent"
-                              _hover={{ bg: "primary-2", borderColor: "transparent" }}
-                              px="16px"
-                              py="6px"
-                              borderRadius="8px"
-                              fontWeight="bold"
-                              fontSize="14px"
-                              transition="all 0.2s ease"
-                              flex={1}
-                              onClick={() => setDialogMode("create")}
-                            >
-                              <FiUserPlus />
-                              Invite Members
-                            </Button>
-                            )}
-                            <Button
-                              bg="transparent"
-                              color="red.400"
-                              borderWidth="2px"
-                              borderColor="red.400"
-                              _hover={{ bg: "red.600", color: "white", borderColor: "red.600" }}
-                              px="16px"
-                              py="6px"
-                              borderRadius="8px"
-                              fontWeight="bold"
-                              fontSize="14px"
-                              transition="all 0.2s ease"
-                              onClick={() => setShowLeaveConfirm(true)}
-                            >
-                              <FiUserMinus />
-                              Leave
-                            </Button>
-                          </Flex>
+                          {isTeamLeader && (
+                            <Flex gap={2} mt={1}>
+                              <Button
+                                bg="primary-1"
+                                color="white"
+                                borderWidth="2px"
+                                borderColor="transparent"
+                                _hover={{ bg: "primary-2", borderColor: "transparent" }}
+                                px="16px"
+                                py="6px"
+                                borderRadius="8px"
+                                fontWeight="medium"
+                                fontSize="14px"
+                                transition="all 0.2s ease"
+                                flex={1}
+                                onClick={() => setDialogMode("create")}
+                              >
+                                <FiUserPlus />
+                                Invite Members
+                              </Button>
+                              <Button
+                                bg="transparent"
+                                color="red.400"
+                                borderWidth="2px"
+                                borderColor="red.400"
+                                _hover={{ bg: "red.600", color: "white", borderColor: "red.600" }}
+                                px="16px"
+                                py="6px"
+                                borderRadius="8px"
+                                fontWeight="medium"
+                                fontSize="14px"
+                                transition="all 0.2s ease"
+                                onClick={() => setShowLeaveConfirm(true)}
+                              >
+                                <FiUserMinus />
+                                Leave
+                              </Button>
+                            </Flex>
+                          )}
                         </Flex>
 
-                        {/* DIVIDER + SHARE INVITE (leader only) */}
-                        {isTeamLeader && (<>
+                        {/* DIVIDER */}
                         <Box
                           display={isMobile ? "none" : "block"}
                           w="1px"
                           bg="primary-3"
                           alignSelf="stretch"
                         />
+
+                        {/* RIGHT SIDE */}
+                        {isTeamLeader ? (<>
 
                         {/* RIGHT SIDE: Team Code + QR button */}
                         <Flex
@@ -495,14 +507,14 @@ export default function CompetitionPage() {
                             px={3}
                             py={2}
                           >
-                            <Text color="neutral-1" fontSize="md" fontFamily="mono" fontWeight="bold" letterSpacing="widest">
+                            <Text color="white" fontSize="md" fontFamily="mono" fontWeight="bold" letterSpacing="widest">
                               {teamData.join_code}
                             </Text>
                             <Button
                               size="xs"
                               bg="transparent"
-                              color="neutral-2"
-                              _hover={{ bg: "rgba(255,255,255,0.05)", color: "primary-1" }}
+                              color="rgba(255,255,255,0.8)"
+                              _hover={{ bg: "rgba(255,255,255,0.2)", color: "primary-1" }}
                               p={1}
                               minW="auto"
                               borderRadius="full"
@@ -535,7 +547,40 @@ export default function CompetitionPage() {
                             Share the code or scan QR to invite teammates
                           </Text>
                         </Flex>
-                        </>)}
+                        </>) : (
+                        <Flex
+                          flexDir="column"
+                          align="center"
+                          justify="center"
+                          gap={3}
+                          minW={isMobile ? "auto" : "180px"}
+                          py={2}
+                        >
+                          <Text color="neutral-3" fontSize="xs" fontWeight="bold" textTransform="uppercase" letterSpacing="wider">
+                            Leave Team
+                          </Text>
+                          <Text color="neutral-3" fontSize="xs" textAlign="center" lineHeight="1.4">
+                            You&apos;ll need a new invite to rejoin.
+                          </Text>
+                          <Button
+                            bg="transparent"
+                            color="red.400"
+                            borderWidth="2px"
+                            borderColor="red.400"
+                            _hover={{ bg: "red.600", color: "white", borderColor: "red.600" }}
+                            px="16px"
+                            py="6px"
+                            borderRadius="8px"
+                            fontWeight="medium"
+                            fontSize="14px"
+                            transition="all 0.2s ease"
+                            onClick={() => setShowLeaveConfirm(true)}
+                          >
+                            <FiUserMinus />
+                            Leave
+                          </Button>
+                        </Flex>
+                        )}
                       </Flex>
                     ) : (
                       <Text color="neutral-3" fontSize="sm">Could not load team info</Text>
@@ -851,14 +896,14 @@ export default function CompetitionPage() {
                   px={4}
                   py={2}
                 >
-                  <Text color="neutral-1" fontSize="lg" fontFamily="mono" fontWeight="bold" letterSpacing="widest">
+                  <Text color="white" fontSize="lg" fontFamily="mono" fontWeight="bold" letterSpacing="widest">
                     {teamData?.join_code}
                   </Text>
                   <Button
                     size="xs"
                     bg="transparent"
-                    color="neutral-2"
-                    _hover={{ bg: "rgba(255,255,255,0.05)", color: "primary-1" }}
+                    color="rgba(255,255,255,0.8)"
+                    _hover={{ bg: "rgba(255,255,255,0.2)", color: "primary-1" }}
                     p={1}
                     minW="auto"
                     borderRadius="full"

@@ -2,6 +2,7 @@
 import { Box, Flex, Heading, Button, Stack, Input, Text, Avatar } from "@chakra-ui/react";
 import { useAuth } from "@/atoms/auth";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 import { MdOutlineContentCopy } from "react-icons/md";
 
 export default function EditProfile() {
@@ -9,6 +10,7 @@ export default function EditProfile() {
 
   return (
     <PageWrapper>
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Profile", href: "/profile" }, { label: "Edit" }]} />
       <Flex direction="column" align="center" py={10}>
         <Heading mb={10} color="neutral-1">Edit my account</Heading>
         

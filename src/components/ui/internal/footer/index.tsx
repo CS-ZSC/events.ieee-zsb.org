@@ -112,11 +112,11 @@ export default function Footer() {
           </Grid>
 
           <Text textAlign={"center"} color={"neutral-2"}>
-            Designed and developed by IEEE-ZSB CS chapter &copy;{" "}
+            Designed and developed by Our Technical Dev Team &copy;{" "}
             {new Date().getFullYear()}
           </Text>
           <Text textAlign={"center"} color={"neutral-2"}>
-            All rights reserved to IEEE-ZSB
+            All rights reserved to IEEE Zagazig SB
           </Text>
         </Stack>
       </Card>

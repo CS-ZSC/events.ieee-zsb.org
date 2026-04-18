@@ -41,9 +41,10 @@ export default function Register() {
       nationalId: "",
       password: "",
       confirmPassword: "",
-      idFrontImage: null,
-      idBackImage: null,
-      profileImage: null,
+      // TODO: ADD THESE IMAGES IN THE BACKEND
+      // idFrontImage: null,
+      // idBackImage: null,
+      // profileImage: null,
     },
   });
 
@@ -88,7 +89,7 @@ export default function Register() {
               </Text>
 
               <Stack w="full" alignItems="center">
-                <Box textAlign="center" mb={4}>
+                {/* <Box textAlign="center" mb={4}>
                   <AvatarUpload
                     label="Profile Picture"
                     value={watch("profileImage")}
@@ -97,7 +98,7 @@ export default function Register() {
                     isInvalid={!!errors.profileImage}
                     errorMessage={errors.profileImage?.message}
                   />
-                </Box>
+                </Box> */}
 
                 <Input
                   label="Full Name"
@@ -174,7 +175,7 @@ export default function Register() {
                   errorMessage={errors.nationalId?.message}
                 />
 
-                <HStack w="fit" align="start" justify={"center"} spaceX={8}>
+                {/* <HStack w="fit" align="start" justify={"center"} spaceX={8}>
                   <FileUpload
                     label="ID Front Card"
                     setFile={(file) => setValue("idFrontImage", file)}
@@ -189,7 +190,7 @@ export default function Register() {
                     isInvalid={!!errors.idBackImage}
                     errorMessage={errors.idBackImage?.message}
                   />
-                </HStack>
+                </HStack> */}
 
                 <PasswordInput
                   label="Password"

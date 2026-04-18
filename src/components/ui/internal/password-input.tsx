@@ -34,7 +34,7 @@ export default function PasswordInput({
             height="calc(100% - {spacing.2})"
             aria-label="Toggle password visibility"
             bg="primary-12"
-            color="natural-2"
+            color="neutral-1"
             border={"1px"}
             borderColor="primary-3"
             borderRadius={"9px"}
@@ -54,7 +54,7 @@ export default function PasswordInput({
           border="1px solid"
           borderColor="primary-3"
           bg="primary-12"
-          color="natural-2"
+          color="neutral-2"
           padding="var(--global-spacing)"
           fontSize={"0.9rem"}
           outline={"none"}

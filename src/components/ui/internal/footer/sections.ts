@@ -13,60 +13,63 @@ interface SectionContentLink {
 }
 
 export const sections: Section[] = [
+	{
+		title: "Quick Access",
+		links: [
+			{
+				name: "Create an Account",
+				href: "/auth/register",
+				authHandler: (isAuth) => !isAuth,
+			},
+			{
+				name: "Login",
+				href: "/auth/login",
+				authHandler: (isAuth) => !isAuth,
+			},
+			{
+				name: "Profile",
+				href: "/profile",
+				authHandler: (isAuth) => isAuth,
+			},
+			{
+				name: "Logout",
+				href: "/auth/logout",
+				authHandler: (isAuth) => isAuth,
+			},
+		],
+	},
+	{
+		title: "PES DAY",
+		links: [
+			{
+				name: "About PES day",
+				href: "/events/pesday",
+			},
+			{
+				name: "PES DAY'26 Registration",
+				href: "/events/pesday",
+			},
+		],
+	},
 	// {
-	// 	title: "Quick Access",
+	// 	title: "Competitions",
 	// 	links: [
 	// 		{
-	// 			name: "Create an Account",
-	// 			href: "/auth/register",
-	// 			authHandler: (isAuth) => !isAuth,
+	// 			name: "Semaphore",
+	// 			href: "/events/mutex/semaphore",
 	// 		},
 	// 		{
-	// 			name: "Login",
-	// 			href: "/auth/login",
-	// 			authHandler: (isAuth) => !isAuth,
+	// 			name: "Deadloock CTF",
+	// 			href: "/events/mutex/deadlock",
 	// 		},
 	// 		{
-	// 			name: "Profile",
-	// 			href: "/account",
-	// 			authHandler: (isAuth) => isAuth,
+	// 			name: "Formula Firefighting",
+	// 			href: "/events/mutex/fire-fighting",
 	// 		},
 	// 		{
-	// 			name: "Settings",
-	// 			href: "/account/settings",
-	// 			authHandler: (isAuth) => isAuth,
-	// 		},
-	// 		{
-	// 			name: "Logout",
-	// 			href: "/auth/logout",
-	// 			authHandler: (isAuth) => isAuth,
+	// 			name: "ECO-Entrepreneurship",
+	// 			href: "/events/mutex/eco-e",
 	// 		},
 	// 	],
 	// },
-	{
-		title: "MUTEX",
-		links: [
-			{
-				name: "About Mutex",
-				href: "/events/mutex",
-			},
-			{
-				name: "Mutex Summit'25 Registration",
-				href: "https://bit.ly/MUTEX_SUMMIT_25",
-			},
-		],
-	},
-	{
-		title: "Competitions",
-		links: [
-			{
-				name: "Programming Competition",
-				href: "/events/mutex/competitions/3",
-			},
-			{
-				name: "Fire Fighting Competition",
-				href: "/events/mutex/competitions/4",
-			},
-		],
-	},
 ];

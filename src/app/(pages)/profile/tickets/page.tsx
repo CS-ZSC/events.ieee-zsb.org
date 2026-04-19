@@ -8,29 +8,7 @@ import PageWrapper from "@/components/ui/internal/page-wrapper";
 import TicketCard, { Ticket } from "@/components/ui/internal/TicketCard";
 import Breadcrumb from "@/components/ui/internal/breadcrumb";
 import { useRouter } from "next/navigation";
-import api from "@/api";
-import { getEvents, ApiEvent } from "@/api/events";
-import { getCompetitions, ApiCompetition } from "@/api/competitions";
-
-// ── Resolved ticket ────────────────────────────────────────────────────────────
-// Ticket enriched with event/competition display data for the card.
-
-interface ResolvedTicket {
-  ticket: Ticket;
-  eventName: string;
-  eventImage: string;
-  time: string;
-  location: string;
-}
-
-// ── Fallback values when event data can't be matched ───────────────────────────
-
-const FALLBACK_IMAGE = "/images/ieee/Rectangle 114.png";
-const FALLBACK_NAME = "IEEE Event";
-const FALLBACK_TIME = "TBA";
-const FALLBACK_LOCATION = "Zagazig University – Faculty of engineering";
-
-// ── Helpers ────────────────────────────────────────────────────────────────────
+import api, { API_LINK } from "@/api";
 
 function formatDate(iso: string): string {
   try {
@@ -42,92 +20,30 @@ function formatDate(iso: string): string {
       minute: "2-digit",
     });
   } catch {
-    return FALLBACK_TIME;
+    return "TBA";
   }
 }
-
-function resolveTickets(
-  tickets: Ticket[],
-  eventsMap: Map<number | string, ApiEvent>,
-  competitionsMap: Map<number, ApiCompetition>,
-): ResolvedTicket[] {
-  return tickets.map((ticket) => {
-    let eventName = FALLBACK_NAME;
-    let eventImage = FALLBACK_IMAGE;
-
-    // Try to match by event_id first
-    if (ticket.event_id && eventsMap.has(ticket.event_id)) {
-      const event = eventsMap.get(ticket.event_id)!;
-      eventName = event.name;
-      eventImage = event.image || event.cover_image || FALLBACK_IMAGE;
-    }
-    // Try to match by competition_id
-    else if (ticket.competition_id && competitionsMap.has(ticket.competition_id)) {
-      const comp = competitionsMap.get(ticket.competition_id)!;
-      eventName = comp.name;
-      // Competitions don't have their own image — use parent event image
-      if (comp.event_id && eventsMap.has(comp.event_id)) {
-        eventImage = eventsMap.get(comp.event_id)!.image || FALLBACK_IMAGE;
-      }
-    }
-
-    return {
-      ticket,
-      eventName,
-      eventImage,
-      time: formatDate(ticket.created_at),
-      location: FALLBACK_LOCATION,
-    };
-  });
-}
-
-// ── Page Component ─────────────────────────────────────────────────────────────
 
 export default function MyTickets() {
   const router = useRouter();
   const spinnerColor = useColorModeValue("black", "white");
 
-  const [resolved, setResolved] = useState<ResolvedTicket[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEmpty, setIsEmpty] = useState(false);
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        // Fetch tickets, events, and competitions concurrently
-        const [ticketsRes, events, competitions] = await Promise.all([
-          api.get("/eventsgate/tickets/my-tickets"),
-          getEvents().catch(() => [] as ApiEvent[]),
-          getCompetitions().catch(() => [] as ApiCompetition[]),
-        ]);
-
-        const tickets: Ticket[] = ticketsRes.data?.data ?? [];
-
-        if (tickets.length === 0) {
-          setIsEmpty(true);
-          return;
-        }
-
-        // Build lookup maps for O(1) matching
-        const eventsMap = new Map<number | string, ApiEvent>();
-        events.forEach((e) => eventsMap.set(Number(e.id), e));
-
-        const competitionsMap = new Map<number, ApiCompetition>();
-        competitions.forEach((c) => competitionsMap.set(c.id, c));
-
-        setResolved(resolveTickets(tickets, eventsMap, competitionsMap));
-      } catch (err: unknown) {
-        console.error("Failed to fetch tickets", err);
-        setIsEmpty(true);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchData();
+    api
+      .get("/eventsgate/tickets/my-tickets")
+      .then((res) => {
+        const data: Ticket[] = res.data?.data ?? [];
+        if (data.length === 0) setIsEmpty(true);
+        else setTickets(data);
+      })
+      .catch(() => setIsEmpty(true))
+      .finally(() => setLoading(false));
   }, []);
 
-  // ── Loading state ────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <PageWrapper>
@@ -138,8 +54,7 @@ export default function MyTickets() {
     );
   }
 
-  // ── Empty / unauthorized state ───────────────────────────────────────────────
-  if (isEmpty || resolved.length === 0) {
+  if (isEmpty) {
     return (
       <PageWrapper>
         <Flex direction="column" align="center" py={10} minH="70vh">
@@ -183,7 +98,6 @@ export default function MyTickets() {
     );
   }
 
-  // ── Tickets grid ─────────────────────────────────────────────────────────────
   return (
     <PageWrapper>
       <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Profile", href: "/profile" }, { label: "Tickets" }]} />
@@ -207,20 +121,19 @@ export default function MyTickets() {
             gap={6}
             justifyItems="center"
           >
-            {resolved.map(({ ticket, eventName, eventImage, time, location }) => (
-              <TicketCard
-                key={ticket.id}
-                ticket={ticket}
-                eventName={eventName}
-                eventImage={eventImage}
-                time={time}
-                location={location}
-                onCancel={(id) => {
-                  console.log("Cancel ticket", id);
-                  // TODO: wire up cancel API
-                }}
-              />
-            ))}
+            {tickets.map((ticket) => {
+              const event = ticket.event_participant.event;
+              return (
+                <TicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  eventName={event.name}
+                  eventImage={event.cover_image ? `${API_LINK}/storage/${event.cover_image}` : ""}
+                  time={event.start_date ? formatDate(event.start_date) : "TBA"}
+                  location={event.location ?? "TBA"}
+                />
+              );
+            })}
           </Grid>
         </Box>
       </Flex>

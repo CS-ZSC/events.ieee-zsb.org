@@ -35,10 +35,10 @@ export default function ProfileHome() {
         </Heading>
         
         <Flex gap={4} mt={4}>
-          <Button bg="primary-10" color="white" px={8} py={6} borderRadius="xl" onClick={() => router.push("/profile/edit")}>
+          {/* <Button bg="primary-10" color="white" px={8} py={6} borderRadius="xl" onClick={() => router.push("/profile/edit")}>
             Edit my account
-          </Button>
-          <Button bg="primary-10" color="white" px={8} py={6} borderRadius="xl" onClick={() => router.push("/profile/tickets")}>
+          </Button> */}
+          <Button bg="primary-1" color="white" px={8} py={6} borderRadius="xl" onClick={() => router.push("/profile/tickets")}>
             See my tickets
           </Button>
         </Flex>

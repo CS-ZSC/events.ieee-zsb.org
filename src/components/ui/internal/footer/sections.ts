@@ -32,6 +32,11 @@ export const sections: Section[] = [
 				authHandler: (isAuth) => isAuth,
 			},
 			{
+				name: "My Tickets",
+				href: "/profile/tickets",
+				authHandler: (isAuth) => isAuth,
+			},
+			{
 				name: "Logout",
 				href: "/auth/logout",
 				authHandler: (isAuth) => isAuth,

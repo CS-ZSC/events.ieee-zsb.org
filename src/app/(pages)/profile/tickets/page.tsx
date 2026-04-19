@@ -6,6 +6,7 @@ import { MoonLoader } from "react-spinners";
 import { useColorModeValue } from "@/components/ui/color-mode";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
 import TicketCard, { Ticket } from "@/components/ui/internal/TicketCard";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 import { useRouter } from "next/navigation";
 import api from "@/api";
 import { getEvents, ApiEvent } from "@/api/events";
@@ -185,6 +186,7 @@ export default function MyTickets() {
   // ── Tickets grid ─────────────────────────────────────────────────────────────
   return (
     <PageWrapper>
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Profile", href: "/profile" }, { label: "Tickets" }]} />
       <Flex direction="column" align="center" py={10} minH="70vh">
         <Heading mb={12} color="neutral-1" fontSize="2xl" fontWeight="bold">
           My tickets

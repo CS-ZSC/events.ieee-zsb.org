@@ -250,7 +250,7 @@ export default function CompetitionPage() {
                 fontWeight="bold"
                 fontSize="lg"
               >
-                {isRegistered ? "Unregister" : "Register Now!"}
+                {isRegistered ? "Unregister" : "Join!"}
               </Button>
             </Flex>
           </Flex>
@@ -268,7 +268,7 @@ export default function CompetitionPage() {
 
         {/* === REGISTER CTA === */}
         <SectionContainer>
-          <SectionDescription description="What are you waiting for? Register now!" />
+          <SectionDescription description="What are you waiting for? Join!" />
           <Button
             onClick={handleRegisterToggle}
             loading={isRegistering}
@@ -281,7 +281,7 @@ export default function CompetitionPage() {
             fontWeight="bold"
             fontSize="lg"
           >
-            {isRegistered ? "Unregister" : "Register Now!"}
+            {isRegistered ? "Unregister" : "Join!"}
           </Button>
         </SectionContainer>
       </Flex>

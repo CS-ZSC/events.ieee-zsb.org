@@ -12,12 +12,13 @@ import { EventCard } from "@/components/ui/internal/home/event-card";
 
 // Import the new API function
 import { getEvents, ApiEvent } from "@/api/events";
+import { API_LINK } from "@/api";
 
 // Dynamically load the Hero component
 const Hero = dynamic(() => import("@/components/ui/internal/hero"), {
   loading: () => (
     <Flex justify="center" align="center" h="40vh">
-      <MoonLoader size={50} color="#00529B" />
+      <MoonLoader size={50} color="var(--chakra-colors-primary-1)" />
     </Flex>
   ),
   ssr: false,
@@ -52,13 +53,13 @@ export default function Home() {
       <Container>
         <PageTitle title="Our events and competitions" />
         <Stack spaceY={4} mt={8} alignItems="center">
-          
+
           {loading && (
             <Flex justify="center" my={10}>
-              <MoonLoader size={50} color="#00529B" />
+              <MoonLoader size={50} color="var(--chakra-colors-primary-1)" />
             </Flex>
           )}
-          
+
           {error && (
             <Text color="red.500" fontSize="lg">
               {error}
@@ -79,9 +80,9 @@ export default function Home() {
                 name={event.name}
                 description={event.description}
                 // Fallback to a placeholder if the API doesn't provide an image
-                image={event.image || "https://via.placeholder.com/800x400?text=Event+Image"}
+                image={`${API_LINK}/storage/${event.cover_image}` || "https://via.placeholder.com/800x400?text=Event+Image"}
                 // Build dynamic URL based on event slug or ID
-                link={event.link || `/events/${event.slug || event.id}`} 
+                link={event.link || `/events/${event.slug || event.id}`}
               />
             ))}
         </Stack>

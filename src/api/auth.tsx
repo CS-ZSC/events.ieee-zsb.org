@@ -117,7 +117,7 @@ export async function verifyRegistration(
       email: user?.email ?? "",
       name: user?.name ?? "",
       profileImageURL: user?.avatar_src ?? "",
-      inviteUserToken: "",
+      inviteUserToken: user?.join_code ?? "",
       message: response.data.message,
     };
   } catch (error: unknown) {
@@ -149,7 +149,7 @@ export async function loginUser(
       email: user?.email ?? "",
       name: user?.name ?? "",
       profileImageURL: user?.avatar_src ?? "",
-      inviteUserToken: "",
+      inviteUserToken: user?.join_code ?? "",
       message: response.data.message,
     };
   } catch (error: unknown) {

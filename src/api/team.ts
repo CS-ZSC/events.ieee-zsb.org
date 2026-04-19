@@ -1,35 +1,110 @@
-import { API_LINK } from ".";
-import { getDefaultStore } from "jotai";
-import { userDataAtom } from "@/atoms/auth";
+import api from ".";
 
-export interface CreateTeamData {
-  name: string;
-  competitionId: number;
+// --- Types ---
+
+interface ApiResponse<T> {
+  message: string;
+  data: T;
 }
 
-export async function createTeam(data: CreateTeamData) {
-  const store = getDefaultStore();
-  const userData = store.get(userDataAtom);
+export interface ApiUser {
+  id: number;
+  name: string;
+  email: string;
+  email_verified_at: string | null;
+  avatar_src: string | null;
+  join_code: string | null;
+  phone_number: string | null;
+  linkedin: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
-  const response = await fetch(`${API_LINK}/Team/create-new-team`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(userData?.token ? { Authorization: `Bearer ${userData.token}` } : {}),
-    },
-    body: JSON.stringify(data),
-  });
+export interface ApiEventParticipantWithUser {
+  id: number;
+  user_id: number;
+  event_id: number;
+  role: string;
+  created_at: string;
+  updated_at: string;
+  user: ApiUser;
+}
 
-  if (response.status === 400) {
-    const errorData = await response.json();
-    return { success: false, message: errorData.message };
-  }
+export interface ApiTeamMember {
+  id: number;
+  team_id: number;
+  event_participant_id: number;
+  created_at: string;
+  updated_at: string;
+  event_participant: ApiEventParticipantWithUser;
+}
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("Team creation failed:", errorText);
-    return { success: false, message: errorText || "Unknown error" };
-  }
+export interface ApiTeam {
+  id: number;
+  competition_id: number;
+  leader_event_participant_id: number;
+  name: string;
+  join_code: string;
+  created_at: string;
+  updated_at: string;
+  members: ApiTeamMember[];
+  leader_event_participant: ApiEventParticipantWithUser;
+}
 
-  return await response.json();
+// --- API Functions ---
+
+export async function getTeams(competitionId: number): Promise<ApiTeam[]> {
+  const { data } = await api.get<ApiResponse<ApiTeam[]>>(
+    `/eventsgate/competitions/${competitionId}/teams`
+  );
+  return data.data;
+}
+
+export async function getTeam(competitionId: number, teamId: number): Promise<ApiTeam> {
+  const { data } = await api.get<ApiResponse<ApiTeam>>(
+    `/eventsgate/competitions/${competitionId}/teams/${teamId}`
+  );
+  return data.data;
+}
+
+export async function getMyTeam(competitionId: number): Promise<ApiTeam> {
+  const { data } = await api.get<ApiResponse<ApiTeam>>(
+    `/eventsgate/competitions/${competitionId}/teams/my-team`
+  );
+  return data.data;
+}
+
+export async function createTeam(competitionId: number, name: string): Promise<ApiTeam> {
+  const { data } = await api.post<ApiResponse<ApiTeam>>(
+    `/eventsgate/competitions/${competitionId}/teams`,
+    { name }
+  );
+  return data.data;
+}
+
+export async function joinTeam(competitionId: number, joinCode: string): Promise<ApiTeamMember> {
+  const { data } = await api.post<ApiResponse<ApiTeamMember>>(
+    `/eventsgate/competitions/${competitionId}/teams/join`,
+    { join_code: joinCode }
+  );
+  return data.data;
+}
+
+export async function leaveTeam(competitionId: number): Promise<void> {
+  await api.delete(`/eventsgate/competitions/${competitionId}/teams/leave`);
+}
+
+export async function addMember(competitionId: number, joinCode: string): Promise<ApiTeamMember> {
+  const { data } = await api.post<ApiResponse<ApiTeamMember>>(
+    `/eventsgate/competitions/${competitionId}/teams/add-member`,
+    { join_code: joinCode }
+  );
+  return data.data;
+}
+
+export async function removeMember(competitionId: number, joinCode: string): Promise<void> {
+  await api.post(
+    `/eventsgate/competitions/${competitionId}/teams/remove-member`,
+    { join_code: joinCode }
+  );
 }

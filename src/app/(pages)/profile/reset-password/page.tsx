@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Card from "@/components/ui/internal/card";
 import { Box, Flex, Stack, Text } from "@chakra-ui/react";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 import Input from "@/components/ui/internal/input";
 import AuthButton from "@/components/ui/internal/auth-button";
 
@@ -21,6 +22,8 @@ export default function ResetPassword() {
   }
 
   return (
+    <>
+    <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Profile", href: "/profile" }, { label: "Reset Password" }]} />
     <Flex justify="center" w="full" h="fit-content" minH="80vh" align="center">
       <Box maxW="720px" w="full" h="fit-content">
         <Card>
@@ -49,5 +52,6 @@ export default function ResetPassword() {
         </Card>
       </Box>
     </Flex>
+    </>
   );
 }

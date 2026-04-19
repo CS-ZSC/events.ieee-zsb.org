@@ -2,6 +2,7 @@
 import { Box, Flex, Heading, Button, Stack, Link } from "@chakra-ui/react";
 import { useAuth } from "@/atoms/auth";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
+import Breadcrumb from "@/components/ui/internal/breadcrumb";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { MoonLoader } from "react-spinners";
@@ -19,7 +20,7 @@ export default function ProfileHome() {
     return (
       <PageWrapper>
         <Flex justify="center" align="center" h="60vh">
-           <MoonLoader color="#006699" />
+           <MoonLoader color="var(--chakra-colors-primary-1)" />
         </Flex>
       </PageWrapper>
     );
@@ -27,6 +28,7 @@ export default function ProfileHome() {
 
   return (
     <PageWrapper>
+      <Breadcrumb items={[{ label: "Home", href: "/" }, { label: "Profile" }]} />
       <Flex direction="column" align="center" justify="center" h="60vh" gap={6}>
         <Heading size="3xl" color="neutral-1">
           Welcome <Box as="span" fontWeight="normal">{userData.name}</Box>

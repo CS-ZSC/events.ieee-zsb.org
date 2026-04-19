@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Flex, Text, Box, Image, Button, Portal } from "@chakra-ui/react";
 import { Dialog } from "@chakra-ui/react";
@@ -37,6 +37,8 @@ export default function EventDetails() {
   const params = useParams();
   const eventId = params?.eventId as string;
   const userData = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // --- DATA FETCHING (SWR) ---
   const { data: eventData, isLoading: loadingEvent, error: eventError } = useEvent(eventId);
@@ -53,6 +55,19 @@ export default function EventDetails() {
   const isRegistered = regStatus?.registered ?? false;
   const eventRole = regStatus?.role || null;
 
+  // Show a nudge toast when returning from login with action=register
+  useEffect(() => {
+    if (searchParams.get("action") === "register") {
+      toaster.create({
+        title: "You're logged in!",
+        description: "Now click 'Get Ticket' to register for this event.",
+        type: "info",
+        duration: 6000,
+      });
+      router.replace(`/events/${eventId}`);
+    }
+  }, []);
+
   // --- UI STATES ---
   const [isRegistering, setIsRegistering] = useState(false);
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
@@ -63,7 +78,16 @@ export default function EventDetails() {
   // --- REGISTRATION LOGIC ---
   const handleRegisterToggle = () => {
     if (!userData?.id) {
-      toaster.create({ title: "Authentication required", description: "Please log in to register.", type: "warning" });
+      toaster.create({
+        title: "Login required",
+        description: "You'll be redirected to login. After signing in, come back here to pick up your ticket.",
+        type: "warning",
+        duration: 4000,
+      });
+      setTimeout(() => {
+        const redirectUrl = `/events/${eventId}?action=register`;
+        router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`);
+      }, 1500);
       return;
     }
     if (isRegistering) return;
@@ -127,7 +151,7 @@ export default function EventDetails() {
       await api.delete(`/eventsgate/events/${eventData.slug || eventId}/unregister`);
       mutateRegistration({ registered: false }, false);
       setShowUnregisterDialog(false);
-      toaster.create({ title: "Unregistered Successfully", type: "info", duration: 3000 });
+      toaster.info({ title: "Unregistered Successfully", duration: 3000 });
     } catch (err: any) {
       if (err.response?.status === 401) {
         toaster.create({ title: "Authentication required", description: "Please log in first.", type: "warning" });

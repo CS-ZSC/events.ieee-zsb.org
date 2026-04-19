@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PageWrapper from "@/components/ui/internal/page-wrapper";
 import { Box, Button, Flex, Text, Image, Portal } from "@chakra-ui/react";
@@ -41,6 +41,8 @@ export default function CompetitionPage() {
   const compId = params?.compId as string;
   const { isMobile } = useWindowType();
   const userData = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const competitionId = compId ? parseInt(compId, 10) : undefined;
   const validCompId = competitionId && !isNaN(competitionId) ? competitionId : undefined;
 
@@ -105,10 +107,32 @@ export default function CompetitionPage() {
     return () => { cancelled = true; };
   }, [competition?.id, userData?.id]);
 
+  // Show a nudge toast when returning from login with action=register
+  useEffect(() => {
+    if (searchParams.get("action") === "register") {
+      toaster.create({
+        title: "You're logged in!",
+        description: "Now click 'Join' to join this competition.",
+        type: "info",
+        duration: 6000,
+      });
+      router.replace(`/events/${eventId}/competitions/${compId}`);
+    }
+  }, []);
+
   // --- REGISTRATION LOGIC ---
   const handleRegisterToggle = async () => {
     if (!userData?.id) {
-      toaster.create({ title: "Authentication required", description: "Please log in to register.", type: "warning" });
+      toaster.create({
+        title: "Login required",
+        description: "You'll be redirected to login. After signing in, come back here to register for this competition.",
+        type: "warning",
+        duration: 4000,
+      });
+      setTimeout(() => {
+        const redirectUrl = `/events/${eventId}/competitions/${compId}?action=register`;
+        router.push(`/auth/login?redirect=${encodeURIComponent(redirectUrl)}`);
+      }, 1500);
       return;
     }
     if (isRegistering) return;
@@ -298,24 +322,26 @@ export default function CompetitionPage() {
                 checkingRegistration ? (
                   <MoonLoader size={24} color="var(--chakra-colors-primary-1)" />
                 ) : !userData?.id ? (
-                  <Link href="/auth/login">
-                    <Button
-                      bg="primary-1"
-                      color="white"
-                      borderWidth="2px"
-                      borderColor="transparent"
-                      _hover={{ bg: "primary-2", borderColor: "transparent" }}
-                      px="25px"
-                      py="8px"
-                      borderRadius="10px"
-                      fontWeight="bold"
-                      fontSize="18px"
-                      transition="all 0.2s ease"
-                    >
-                      <FiUserPlus />
-                      Login to Register
-                    </Button>
-                  </Link>
+                  <Button
+                    bg="primary-1"
+                    color="white"
+                    borderWidth="2px"
+                    borderColor="transparent"
+                    _hover={{ bg: "primary-2", borderColor: "transparent" }}
+                    px="25px"
+                    py="8px"
+                    borderRadius="10px"
+                    fontWeight="bold"
+                    fontSize="18px"
+                    transition="all 0.2s ease"
+                    onClick={() => {
+                      toaster.create({ title: "Login required", description: "You'll be redirected to login. After signing in, come back here to register.", type: "warning", duration: 4000 });
+                      setTimeout(() => router.push(`/auth/login?redirect=${encodeURIComponent(`/events/${eventId}/competitions/${compId}?action=register`)}`), 1500);
+                    }}
+                  >
+                    <FiUserPlus />
+                    Login to Register
+                  </Button>
                 ) : registeredOtherCompetition ? (
                   <Flex
                     align="center"
@@ -649,7 +675,7 @@ export default function CompetitionPage() {
                   transition="all 0.2s ease"
                 >
                   {isRegistered ? <FiUserMinus /> : <FiUserPlus />}
-                  {isRegistered ? "Unregister" : "Register Now!"}
+                  {isRegistered ? "Unregister" : "Join Competition!"}
                 </Button>
               )}
             </Flex>
@@ -673,24 +699,26 @@ export default function CompetitionPage() {
             {checkingRegistration ? (
               <MoonLoader size={24} color="var(--chakra-colors-primary-1)" />
             ) : !userData?.id ? (
-              <Link href="/auth/login">
-                <Button
-                  bg="primary-1"
-                  color="white"
-                  borderWidth="2px"
-                  borderColor="transparent"
-                  _hover={{ bg: "primary-2", borderColor: "transparent" }}
-                  px="25px"
-                  py="8px"
-                  borderRadius="10px"
-                  fontWeight="bold"
-                  fontSize="18px"
-                  transition="all 0.2s ease"
-                >
-                  <FiUserPlus />
-                  Login to Register
-                </Button>
-              </Link>
+              <Button
+                bg="primary-1"
+                color="white"
+                borderWidth="2px"
+                borderColor="transparent"
+                _hover={{ bg: "primary-2", borderColor: "transparent" }}
+                px="25px"
+                py="8px"
+                borderRadius="10px"
+                fontWeight="bold"
+                fontSize="18px"
+                transition="all 0.2s ease"
+                onClick={() => {
+                  toaster.create({ title: "Login required", description: "You'll be redirected to login. After signing in, come back here to register.", type: "warning", duration: 4000 });
+                  setTimeout(() => router.push(`/auth/login?redirect=${encodeURIComponent(`/events/${eventId}/competitions/${compId}?action=register`)}`), 1500);
+                }}
+              >
+                <FiUserPlus />
+                Login to Register
+              </Button>
             ) : isRegistered && existingTeamId && isTeamLeader ? (
             <Button
               bg="primary-1"
@@ -794,7 +822,7 @@ export default function CompetitionPage() {
         )}
         {competition.type !== "team" && (
           <SectionContainer>
-            <SectionDescription description={isRegistered ? "You are registered for this competition!" : "What are you waiting for? Register now!"} />
+            <SectionDescription description={isRegistered ? "You are registered for this competition!" : "What are you waiting for? Get Ticket!"} />
             <Button
               onClick={handleRegisterToggle}
               loading={isRegistering || checkingRegistration}
@@ -816,7 +844,7 @@ export default function CompetitionPage() {
               transition="all 0.2s ease"
             >
               {isRegistered ? <FiUserMinus /> : <FiUserPlus />}
-              {isRegistered ? "Unregister" : "Register Now!"}
+              {isRegistered ? "Unregister" : "Join Competition!"}
             </Button>
           </SectionContainer>
         )}

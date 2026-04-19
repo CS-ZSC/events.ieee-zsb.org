@@ -12,7 +12,7 @@ import { loginUser } from "@/api/auth";
 import { useSetAtom } from "jotai";
 import { userDataAtom, UserData } from "@/atoms/auth";
 import { toaster } from "@/components/ui/toaster";
-import { redirect } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type LoginFormData = {
   email: string;
@@ -21,6 +21,8 @@ type LoginFormData = {
 
 export default function Login() {
   const setUserData = useSetAtom(userDataAtom);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
     defaultValues: {
       email: "",
@@ -42,14 +44,15 @@ export default function Login() {
       };
       setUserData(userData);
 
+      const redirectTo = searchParams.get("redirect");
       toaster.success({
         closable: true,
         title: "Login Successful",
-        description: "Welcome back!",
-        duration: 10000
+        description: redirectTo ? "Welcome back! Redirecting you to continue..." : "Welcome back!",
+        duration: 4000,
       });
 
-      redirect("/");
+      router.push(redirectTo || "/");
     } else {
       toaster.error({
         closable: true,

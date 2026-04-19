@@ -118,7 +118,7 @@ export default function CompetitionCard({
               bg="primary-1"
               py={2.5}
             >
-              <Text color="white" fontSize="sm" fontWeight="600">Register now!</Text>
+              <Text color="white" fontSize="sm" fontWeight="600">Join!</Text>
             </Flex>
           )}
         </Stack>

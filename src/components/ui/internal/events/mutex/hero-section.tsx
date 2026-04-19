@@ -85,10 +85,10 @@ export default function HeroSection({
               transition="all 0.2s ease"
             >
               {isRegistered ? <FiUserMinus /> : <FiUserPlus />}
-              {isRegistered ? "Unregister" : "Register Now!"}
+              {isRegistered ? "Unregister" : "Get Ticket!"}
             </Button>
           ) : buttonLink ? (
-            <NavButton link={buttonLink} text="Register Now!" />
+            <NavButton link={buttonLink} text="Get Ticket!" />
           ) : null}
 
           {ruleBook && (

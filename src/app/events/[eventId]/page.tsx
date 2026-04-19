@@ -27,7 +27,7 @@ import {
   checkCompetitionRegistration,
   getCompetitions,
 } from "@/api/competitions";
-import api from "@/api";
+import api, { API_LINK } from "@/api";
 import Competitions from "@/components/ui/internal/events/mutex/competitions";
 import { useAuth } from "@/atoms/auth";
 import { useEvent, useEventImages, useEventSpeakers, useEventSponsors } from "@/hooks/use-event";
@@ -35,7 +35,7 @@ import { useEventRegistration } from "@/hooks/use-event-registration";
 
 export default function EventDetails() {
   const params = useParams();
-  const eventId = params?.eventId as string; 
+  const eventId = params?.eventId as string;
   const userData = useAuth();
 
   // --- DATA FETCHING (SWR) ---
@@ -52,7 +52,7 @@ export default function EventDetails() {
   const error = eventError ? "Failed to load event details." : null;
   const isRegistered = regStatus?.registered ?? false;
   const eventRole = regStatus?.role || null;
-  
+
   // --- UI STATES ---
   const [isRegistering, setIsRegistering] = useState(false);
   const [showRegisterDialog, setShowRegisterDialog] = useState(false);
@@ -88,7 +88,7 @@ export default function EventDetails() {
           .then((results) => {
             setCompetitionNames(results.filter((n): n is string => n !== null));
           })
-          .catch(() => {})
+          .catch(() => { })
           .finally(() => setLoadingUnregisterInfo(false));
       }
     } else {
@@ -181,7 +181,7 @@ export default function EventDetails() {
         <HeroSection
           title={eventData.name}
           description={eventData.description}
-          imagePath={(images && images.length > 0 && images[0].url) ? images[0].url : (eventData.image || "https://via.placeholder.com/800x400?text=Image+Coming+Soon")}
+          imagePath={`${API_LINK}/storage/${eventData.cover_image}`}
           imageAlt={`${eventData.name} main event image`}
           onRegisterClick={handleRegisterToggle}
           isRegistered={isRegistered}
@@ -254,17 +254,17 @@ export default function EventDetails() {
             <Flex flexWrap="wrap" justify="center" gap={8} mt={10}>
               {(speakers ?? []).map((speaker) => (
                 <Flex key={speaker.id} direction="column" align="center">
-                   <Box width="150px" height="150px" overflow="hidden" borderRadius="full" mb={4}>
-                      <Image 
-                        src={speaker.image || "https://via.placeholder.com/150?text=No+Photo"} 
-                        alt={`${speaker.name} profile picture`} 
-                        objectFit="cover" 
-                        w="100%" 
-                        h="100%" 
-                      />
-                   </Box>
-                   <Text fontWeight="bold" color="neutral-1" fontSize="xl" mb={1}>{speaker.name}</Text>
-                   <Text color="neutral-2" fontSize="md">{speaker.title}</Text>
+                  <Box width="150px" height="150px" overflow="hidden" borderRadius="full" mb={4}>
+                    <Image
+                      src={speaker.image || "https://via.placeholder.com/150?text=No+Photo"}
+                      alt={`${speaker.name} profile picture`}
+                      objectFit="cover"
+                      w="100%"
+                      h="100%"
+                    />
+                  </Box>
+                  <Text fontWeight="bold" color="neutral-1" fontSize="xl" mb={1}>{speaker.name}</Text>
+                  <Text color="neutral-2" fontSize="md">{speaker.title}</Text>
                 </Flex>
               ))}
             </Flex>
@@ -280,12 +280,12 @@ export default function EventDetails() {
             <Flex flexWrap="wrap" justify="center" gap={8} mt={10}>
               {(sponsors ?? []).map((sponsor) => (
                 <Flex key={sponsor.id} align="center" justify="center" p={4}>
-                   <Image 
-                     src={sponsor.logo || "https://via.placeholder.com/150?text=No+Logo"} 
-                     alt={`${sponsor.name} logo`} 
-                     maxH="100px" 
-                     objectFit="contain" 
-                   />
+                  <Image
+                    src={sponsor.logo || "https://via.placeholder.com/150?text=No+Logo"}
+                    alt={`${sponsor.name} logo`}
+                    maxH="100px"
+                    objectFit="contain"
+                  />
                 </Flex>
               ))}
             </Flex>

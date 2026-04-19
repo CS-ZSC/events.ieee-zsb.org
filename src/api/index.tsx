@@ -2,10 +2,10 @@ import axios from "axios";
 
 // Standard Practice: Use NEXT_PUBLIC prefix for client-side env variables.
 // Fallback URL is provided to prevent runtime crashes if env is missing.
-export const API_LINK = process.env.NEXT_PUBLIC_API_URL || "https://ieee-zsb-website.runasp.net/api";
+export const API_LINK = process.env.NEXT_PUBLIC_API_URL;
 
 const api = axios.create({
-  baseURL: API_LINK,
+  baseURL: `${API_LINK}/api`,
 });
 
 

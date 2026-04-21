@@ -44,15 +44,11 @@ export const sections: Section[] = [
 		],
 	},
 	{
-		title: "PES DAY",
+		title: "PES Day 2026",
 		links: [
 			{
-				name: "About PES day",
-				href: "/events/pesday",
-			},
-			{
-				name: "PES DAY'26 Registration",
-				href: "/events/pesday",
+				name: "About PES Day",
+				href: "/events/pes-day-2026",
 			},
 		],
 	},

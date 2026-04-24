@@ -196,7 +196,7 @@ export default function EventDetails() {
         flexDirection={"column"}
         alignItems="center"
         justifyContent="center"
-        gap={20}
+        gap={10}
         maxWidth={"1300px"}
         mx={"auto"}
         mb={16}
@@ -280,7 +280,7 @@ export default function EventDetails() {
                 <Flex key={speaker.id} direction="column" align="center">
                   <Box width="150px" height="150px" overflow="hidden" borderRadius="full" mb={4}>
                     <Image
-                      src={speaker.image || "https://via.placeholder.com/150?text=No+Photo"}
+                      src={`${API_LINK}/storage/${speaker.image }`}
                       alt={`${speaker.name} profile picture`}
                       objectFit="cover"
                       w="100%"
@@ -301,15 +301,50 @@ export default function EventDetails() {
           {(sponsors ?? []).length === 0 ? (
             <AlternativeText text="Stay tuned for our sponsors announcements!" />
           ) : (
-            <Flex flexWrap="wrap" justify="center" gap={8} mt={10}>
+            <Flex flexWrap="wrap" justify="center" gap={5} mt={10}>
               {(sponsors ?? []).map((sponsor) => (
-                <Flex key={sponsor.id} align="center" justify="center" p={4}>
-                  <Image
-                    src={sponsor.logo || "https://via.placeholder.com/150?text=No+Logo"}
-                    alt={`${sponsor.name} logo`}
-                    maxH="100px"
-                    objectFit="contain"
-                  />
+                <Flex
+                  key={sponsor.id}
+                  direction="column"
+                  align="center"
+                  justify="center"
+                  gap={3}
+                  p={6}
+                  bg="primary-5"
+                  border="1px solid"
+                  borderColor="primary-3"
+                  borderRadius="2xl"
+                  minW="160px"
+                  maxW="220px"
+                  flex="1"
+                  position="relative"
+                  transition="all 0.2s ease"
+                  cursor={sponsor.website_url ? "pointer" : "default"}
+                  _hover={{
+                    borderColor: "primary-2",
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 8px 32px rgba(0,102,153,0.18)",
+                  }}
+                  onClick={() => sponsor.website_url && window.open(sponsor.website_url, "_blank", "noopener noreferrer")}
+                >
+                  {sponsor.website_url && (
+                    <Box position="absolute" top={3} right={3} opacity={0.5}>
+                      <Icon icon="mdi:open-in-new" width={14} />
+                    </Box>
+                  )}
+                  <Flex align="center" justify="center" w="100%" h="80px">
+                    <Image
+                      src={`${API_LINK}/storage/${sponsor.logo}`}
+                      alt={`${sponsor.name} logo`}
+                      // maxH="72px"
+                      maxW="190px"
+                      objectFit="contain"
+                    />
+                  </Flex>
+                  <Box w="100%" h="1px" bg="primary-3" />
+                  <Text color="neutral-2" fontSize="sm" fontWeight="semibold" textAlign="center">
+                    {sponsor.name}
+                  </Text>
                 </Flex>
               ))}
             </Flex>

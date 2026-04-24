@@ -29,6 +29,7 @@ export interface ApiSponsor {
   id: number;
   name: string;
   logo: string;
+  website_url: string | null;
 }
 
 interface ApiResponse<T> {
